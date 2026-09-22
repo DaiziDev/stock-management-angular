@@ -4,11 +4,6 @@ Application SaaS multi-tenant de gestion de stock pour PME : catalogue articles,
 
 Le dépôt contient deux applications :
 
-| Application | Rôle | Technologies |
-|---|---|---|
-| `backend/` | API REST (port 8081) | Java 17, Spring Boot 3.4.1, PostgreSQL, Flyway, JWT, springdoc-openapi |
-| `frontend/` | Interface web (port 4200) | Angular 21 (standalone), Tailwind CSS 4, Chart.js, Vitest |
-
 ## Prérequis
 
 | Outil | Version |
