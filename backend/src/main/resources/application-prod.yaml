@@ -1,0 +1,22 @@
+# =====================================================================
+# Profil PROD — démarre avec : --spring.profiles.active=prod
+#
+# Durcissement pour la production :
+#   * le schéma est géré EXCLUSIVEMENT par Flyway (V1, V2, ...) :
+#     Hibernate ne fait que valider (ddl-auto: validate) — jamais update ;
+#   * JWT_SECRET est OBLIGATOIRE, sans valeur par défaut : l'application
+#     refuse de démarrer sans. Ne jamais réutiliser le secret de dev ;
+#   * les logs SQL verbeux sont désactivés.
+# =====================================================================
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+jwt:
+  # Pas de valeur par défaut : variable d'environnement OBLIGATOIRE.
+  # Générer un secret fort : openssl rand -base64 64
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}

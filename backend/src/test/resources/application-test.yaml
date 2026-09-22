@@ -1,0 +1,18 @@
+# =====================================================================
+# Profil TEST — utilisé par les tests d'intégration (mvn test).
+#
+# Hérite d'application.yaml (même base PostgreSQL de dev : Flyway y
+# applique les migrations, ddl-auto valide). Les tests créent
+# EXCLUSIVEMENT des données préfixées "TEST-" et les suppriment à la
+# fin de chaque test — les données de développement ne sont jamais
+# touchées. Le SMTP est redirigé vers localhost : les envois échouent
+# vite (et EmailService les absorbe, best-effort) au lieu d'attendre
+# un timeout Gmail à chaque test de commande.
+# =====================================================================
+
+spring:
+  mail:
+    host: localhost
+    port: 2525
+    username: ""
+    password: ""
