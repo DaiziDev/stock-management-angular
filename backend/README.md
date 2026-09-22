@@ -1,128 +1,158 @@
 # Backend — API SGS
 
-API REST du système de gestion de stock SGS, construite avec **Spring Boot 3.4** et **Java 17**. Elle expose tout ce dont l'application frontend a besoin : authentification JWT, catalogue articles, stock, commandes, ventes et backoffice plateforme.
+API REST du système de gestion de stock SGS : authentification JWT, catalogue articles, stock tracé par mouvements, commandes fournisseurs et clients, ventes, dashboard et backoffice plateforme.
+
+| Composant | Technologie |
+|---|---|
+| Langage | Java 17 |
+| Framework | Spring Boot 3.4.1 (Web, Data JPA, Security, Validation, Mail) |
+| Base de données | PostgreSQL |
+| Migrations de schéma | Flyway (source de vérité : `db/migration`) |
+| Authentification | JWT (access 24 h) + refresh token opaque (7 j, rotation) |
+| Documentation API | springdoc-openapi (Swagger UI) |
+| Build | Maven (wrapper 3.3.4, distribution 3.9.9 téléchargée automatiquement) |
 
 ## Prérequis
 
-| Outil       | Version         |
-|-------------|-----------------|
-| Java (JDK)  | 17 ou plus      |
-| Maven       | 3.8+            |
-| PostgreSQL  | 14+             |
+| Outil | Version |
+|---|---|
+| JDK | 17 ou plus |
+| PostgreSQL | 14 ou plus |
 
-> Le wrapper Maven du dépôt est incomplet (fichier `.mvn/wrapper/maven-wrapper.properties` manquant). Utilisez un Maven installé sur la machine (`mvn`), ou restaurez le wrapper avant d'utiliser `./mvnw`.
+Le wrapper Maven (`mvnw` / `mvnw.cmd`) télécharge Maven 3.9.9 au premier lancement : aucun Maven n'a besoin d'être installé. Sous Windows, utiliser `mvnw.cmd` (PowerShell) ou `./mvnw` (Git Bash).
 
-## Démarrage rapide
+## 1. Base de données
 
-### 1. Préparer la base de données
-
-Par défaut, l'application se connecte à `jdbc:postgresql://localhost:5432/stock_db` avec l'utilisateur `postgres`. Définissez vous-même le mot de passe de votre choix :
+Par défaut, l'application se connecte à `jdbc:postgresql://localhost:5432/stock_db` avec l'utilisateur `postgres` et le mot de passe `postgres` :
 
 ```bash
-# Remplacez les étoiles par VOTRE mot de passe
-sudo -u postgres psql -c "ALTER USER postgres PASSWORD '****';"
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
 sudo -u postgres createdb stock_db
 ```
 
-Reportez ce même mot de passe dans la variable `DB_PASSWORD` au lancement de l'application (voir [Configuration](#configuration)).
+Avec un mot de passe différent, le surcharger par la variable `DB_PASSWORD` (voir [Configuration](#configuration)).
 
-Vérifiez que la connexion TCP fonctionne (c'est ainsi que l'API se connecte) :
+Le schéma est entièrement géré par Flyway : les migrations `V1` à `V5` (`src/main/resources/db/migration`) sont appliquées automatiquement au premier démarrage. Hibernate fonctionne en `ddl-auto: validate` : toute évolution du schéma passe par une nouvelle migration `V<n>__description.sql`, jamais par les entités. Sur une base existante créée avant Flyway, `baseline-on-migrate` pose automatiquement le marqueur « V1 appliquée ».
+
+## 2. Configuration
+
+Tous les défauts vivent dans `src/main/resources/application.yaml` et se surchargent par variables d'environnement :
+
+| Variable | Défaut (dev) | Description |
+|---|---|---|
+| `DB_URL` | `jdbc:postgresql://localhost:5432/stock_db` | URL JDBC PostgreSQL |
+| `DB_USERNAME` | `postgres` | Utilisateur de la base |
+| `DB_PASSWORD` | `postgres` | Mot de passe de la base |
+| `JWT_SECRET` | secret de dev public | Clé de signature des JWT. Obligatoire sans défaut en production (générer avec `openssl rand -base64 64`) |
+| `JWT_EXPIRATION` | `86400000` | Durée de vie de l'access token en ms (24 h) |
+| `JWT_REFRESH_DAYS` | `7` | Durée de vie du refresh token en jours |
+| `MAIL_USERNAME` | vide | Compte SMTP (Gmail) pour l'envoi des bons de commande |
+| `MAIL_PASSWORD` | vide | Mot de passe d'application SMTP |
+
+Le profil `prod` (`application-prod.yaml`) durcie la configuration : `JWT_SECRET` obligatoire (l'application refuse de démarrer sans), `ddl-auto: validate`, logs SQL désactivés.
+
+## 3. Lancement
 
 ```bash
-PGPASSWORD=**** psql -h localhost -U postgres -d stock_db -c "SELECT 1;"
+./mvnw spring-boot:run
 ```
 
-### 2. Lancer l'application
+L'API démarre sur http://localhost:8081.
 
-```bash
-mvn spring-boot:run
-```
+- Swagger UI : http://localhost:8081/swagger-ui.html
+- OpenAPI JSON : http://localhost:8081/api-docs
 
-L'API écoute sur **http://localhost:8081**.
+### Comptes créés au démarrage
 
-- Swagger UI : http://localhost:8081/swagger-ui/index.html
-- OpenAPI JSON : http://localhost:8081/v3/api-docs
+`DataInitializer` crée de façon idempotente :
 
-### 3. Se connecter
+| Compte | Login | Mot de passe | Rôle |
+|---|---|---|---|
+| Opérateur plateforme | `admin@sgs.local` | `admin123` | `SUPER_ADMIN` |
+| Entreprise de démonstration | — | — | Entreprise « SGS Demo » |
 
-Un compte SUPER_ADMIN de « bootstrap » est créé automatiquement au premier démarrage :
-
-| Login             | Mot de passe |
-|-------------------|--------------|
-| `admin@sgs.local` | `****`       |
-
-C'est le compte opérateur de la plateforme : il sert à onboarder les entreprises clientes depuis la console `/plateforme`. Le login et le mot de passe par défaut sont définis dans `DataInitializer.java` (constantes `BOOTSTRAP_*`) : personnalisez-les avant toute mise en production.
-
-## Configuration
-
-Toute la configuration par défaut vit dans `src/main/resources/application.yaml` et se surcharge par variables d'environnement :
-
-| Variable          | Défaut                                        | Rôle                                   |
-|-------------------|-----------------------------------------------|----------------------------------------|
-| `DB_URL`          | `jdbc:postgresql://localhost:5432/stock_db`   | URL JDBC PostgreSQL                    |
-| `DB_USERNAME`     | `postgres`                                    | Utilisateur base de données            |
-| `DB_PASSWORD`     | `****` (défaut de dev)                        | Mot de passe base de données           |
-| `JWT_SECRET`      | clé de développement (publique, volontairement) | Clé de signature des tokens JWT     |
-| `JWT_EXPIRATION`  | `86400000` (24 h)                             | Durée de vie de l'access token (ms)    |
-| `JWT_REFRESH_DAYS`| `7`                                           | Durée de vie du refresh token (jours)  |
-| `MAIL_USERNAME`   | vide                                          | Compte SMTP (Gmail) pour les e-mails   |
-| `MAIL_PASSWORD`   | vide                                          | Mot de passe / mot d'application SMTP  |
-
-Le profil **prod** (`application-prod.yaml`) durcit tout ça : `JWT_SECRET` y est obligatoire et sans valeur par défaut.
-
-## Base de données et migrations
-
-Le schéma est géré par **Flyway**, qui est la source de vérité :
-
-- Les migrations vivent dans `src/main/resources/db/migration/` (`V1__baseline_schema.sql`, `V2`... `V5`).
-- Hibernate est en `ddl-auto: validate` : il ne crée ni ne modifie rien, il vérifie seulement la cohérence des entités avec le schéma.
-- Pour faire évoluer le schéma, ajoutez un fichier `V6__description_de_la_change.sql`. Ne touchez jamais au schéma à la main.
-- Sur une base existante créée avant Flyway, `baseline-on-migrate` pose automatiquement le marqueur « V1 appliquée ».
+Le `SUPER_ADMIN` n'est rattaché à aucune entreprise : il onboard les entreprises clientes depuis la console `/plateforme` (création de l'entreprise puis de son premier `ADMIN`). Le endpoint `/api/auth/register` est réservé aux `ADMIN` (dans leur propre entreprise) et au `SUPER_ADMIN`. Le login et le mot de passe bootstrap sont définis dans `DataInitializer.java` (constantes `BOOTSTRAP_*`) et doivent être modifiés avant toute mise en production.
 
 ## Sécurité
 
-- Authentification **JWT** : access token + refresh token (révocable, stocké côté serveur).
-- Quatre rôles hiérarchisés (voir `UserRole`) :
-  - `SUPER_ADMIN` : opérateur de la plateforme, rattaché à aucune entreprise, gère les entreprises clientes ;
-  - `ADMIN` : patron d'une entreprise cliente, gère ses utilisateurs ;
-  - `GESTIONNAIRE` : commandes, fournisseurs, stock, rapports ;
-  - `VENDEUR` : ventes au comptoir et consultation.
-- Cloisonnement multi-tenant : chaque requête est filtrée par l'`entrepriseId` porté dans le JWT.
-- Endpoints publics : `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, Swagger UI et la documentation OpenAPI.
+- Authentification JWT : access token (24 h) + refresh token opaque (7 j, révocable, stocké côté serveur, rotation à chaque `refresh`).
+- Quatre rôles hiérarchisés (`UserRole`) :
 
-## Organisation du code
+| Rôle | Périmètre |
+|---|---|
+| `SUPER_ADMIN` | Backoffice plateforme : statistiques globales, onboarding des entreprises. `entrepriseId = null` dans le JWT |
+| `ADMIN` | Gestion de son entreprise : utilisateurs et paramètres |
+| `GESTIONNAIRE` | Commandes, fournisseurs, stock, rapports |
+| `VENDEUR` | Vente au comptoir et consultation articles/clients |
 
-```
-src/main/java/com/sgs/backend/
-├── config/          Sécurité (JWT, CORS), Swagger, bootstrap des données
-├── entreprise/      Entreprises clientes (multi-tenant)
-├── utilisateur/     Comptes utilisateurs
-├── roles/           Énumération des rôles
-├── article/         Catalogue produits
-├── categorie/       Catégories
-├── stock/           Niveaux de stock (lecture)
-├── mvtStk/          Mouvements de stock (entrées/sorties/ajustements)
-├── commandeClient/  Commandes clients (validation -> sortie de stock)
-├── commandeFournisseur/  Commandes d'achat (réception -> entrée de stock)
-├── vente/           Ventes au comptoir
-├── client/          Fiches clients
-├── fournisseur/     Fiches fournisseurs
-├── dashboard/       KPIs et données de graphiques
-├── notification/    Alertes in-app (stock sous seuil)
-└── plateforme/      Backoffice SUPER_ADMIN (stats, onboarding)
-```
+- Cloisonnement multi-tenant : chaque requête est scopée par l'`entrepriseId` du JWT. Les données d'une autre entreprise renvoient 404, jamais 403.
+- Endpoints publics : `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, Swagger UI et documentation OpenAPI. Tous les autres exigent le header `Authorization: Bearer <access token>`.
 
-Chaque module suit le même découpage : `Controller` (endpoints + annotations OpenAPI), `Service` (logique métier), `Repository` (accès données), DTOs de requête/réponse.
+## Aperçu des modules
 
-## Tests et vérifications
+Un package = une entité ou un domaine, avec le même découpage : `Controller` (endpoints + annotations OpenAPI), `Service` (logique métier), `Repository` (accès données), DTOs de requête/réponse.
 
-```bash
-mvn test          # tests unitaires et d'intégration
-mvn verify        # tests + vérifications
-```
+| Package | Contenu |
+|---|---|
+| `article/` `categorie/` | Catalogue produits et catégories |
+| `client/` `fournisseur/` | Fiches clients et fournisseurs |
+| `commandeClient/` `commandeFournisseur/` | Commandes de vente et d'achat (validation, réception complète ou partielle, annulation) |
+| `commande/` | Énumérations de statut partagées des deux types de commandes |
+| `ligneCommandeClient/` `ligneCommandeFournisseur/` `ligneVente/` | Lignes de détail des commandes et ventes |
+| `vente/` | Ventes au comptoir (immuables, décrémentent le stock) |
+| `mvtStk/` | Cœur du stock : mouvements ENTREE / SORTIE / AJUSTEMENT |
+| `stock/` | État, alertes de seuil, valorisation (lecture seule) |
+| `dashboard/` | KPIs et graphiques 30 jours |
+| `entreprise/` | Tenants (entreprises clientes) |
+| `utilisateur/` | Comptes utilisateurs |
+| `auth/` | Refresh tokens |
+| `notification/` | Alertes in-app (stock sous seuil, calculées à la volée) et emails best-effort |
+| `plateforme/` | Backoffice SUPER_ADMIN (stats, onboarding) |
+| `adresse/` | Composant `@Embeddable` réutilisé par les entités |
+| `common/` `config/` | Entité de base, gestion d'erreurs globale ; sécurité JWT, CORS, OpenAPI, bootstrap |
 
-Avant de pousser, vérifiez au minimum que le projet compile :
+## Tests
 
 ```bash
-mvn compile
+./mvnw test
+```
+
+Les tests d'intégration (règles de stock RG-02 à RG-06, isolation multi-tenant) utilisent la même base PostgreSQL de développement : ils ne créent que des données préfixées `TEST-` et les suppriment après chaque test. Le profil `test` (`src/test/resources/application-test.yaml`) redirige le SMTP vers `localhost:2525`.
+
+Avant de pousser, vérifier au minimum la compilation :
+
+```bash
+./mvnw compile
+```
+
+## Build de production
+
+```bash
+./mvnw clean package
+java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+```
+
+## Structure du projet
+
+```
+backend/
+├── mvnw / mvnw.cmd / .mvn/wrapper/          # Wrapper Maven (télécharge Maven 3.9.9)
+├── pom.xml                                  # Dépendances Maven
+└── src/
+    ├── main/
+    │   ├── java/com/sgs/backend/            # Un package par domaine métier
+    │   │   ├── article/ categorie/ client/ fournisseur/
+    │   │   ├── commandeClient/ commandeFournisseur/ vente/
+    │   │   ├── mvtStk/                      # Cœur du stock (mouvements)
+    │   │   ├── stock/ dashboard/            # Vues lecture seule, KPIs
+    │   │   ├── entreprise/ utilisateur/ auth/
+    │   │   ├── notification/ plateforme/
+    │   │   └── common/ config/
+    │   └── resources/
+    │       ├── application.yaml             # Config dev (défauts inclus)
+    │       ├── application-prod.yaml        # Config production
+    │       └── db/migration/                # Migrations Flyway V1 → V5
+    └── test/
+        ├── java/com/sgs/backend/integration/  # Tests d'intégration stock
+        └── resources/application-test.yaml
 ```

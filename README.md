@@ -1,28 +1,27 @@
 # SGS — Système de Gestion de Stock
 
-Backend d'une application SaaS **multi-tenant** de gestion de stock pour PME : articles, commandes fournisseurs et clients, ventes au comptoir, mouvements de stock tracés, dashboard et backoffice plateforme.
+Application SaaS multi-tenant de gestion de stock pour PME : catalogue articles, commandes fournisseurs et clients, ventes au comptoir, mouvements de stock tracés, dashboard et backoffice plateforme.
 
-> ⚠️ Le dossier `frontend/` est actuellement vide — ce dépôt ne contient que l'API backend.
+Le dépôt contient deux applications :
 
-## Stack technique
-
-| Composant | Technologie |
-|---|---|
-| Langage | Java 17 |
-| Framework | Spring Boot 3.4.1 (Web, Data JPA, Security, Validation, Mail) |
-| Base de données | PostgreSQL |
-| Migrations de schéma | Flyway (source de vérité : `db/migration`) |
-| Authentification | JWT (access 24 h) + refresh token opaque (7 j, rotation) |
-| Documentation API | springdoc-openapi (Swagger UI) |
-| Build | Maven |
+| Application | Rôle | Technologies |
+|---|---|---|
+| `backend/` | API REST (port 8081) | Java 17, Spring Boot 3.4.1, PostgreSQL, Flyway, JWT, springdoc-openapi |
+| `frontend/` | Interface web (port 4200) | Angular 21 (standalone), Tailwind CSS 4, Chart.js, Vitest |
 
 ## Prérequis
 
-- **Java 17+** (JDK)
-- **Maven 3.8+** (ou utiliser le wrapper si présent)
-- **PostgreSQL 14+** en fonctionnement local
+| Outil | Version |
+|---|---|
+| JDK | 17 ou plus |
+| Maven | 3.8 ou plus |
+| PostgreSQL | 14 ou plus |
+| Node.js | 20.19+ ou 22.12+ |
+| npm | 10 ou plus |
 
-## Base de données
+Le wrapper Maven (`backend/mvnw`) télécharge automatiquement la distribution Maven 3.9.9 au premier lancement ; aucun Maven n'a besoin d'être installé si le JDK est présent.
+
+## 1. Base de données
 
 Créer la base de développement :
 
@@ -30,67 +29,92 @@ Créer la base de développement :
 CREATE DATABASE stock_db;
 ```
 
-Le schéma est entièrement géré par **Flyway** : au premier démarrage, les migrations `V1` à `V5` sont appliquées automatiquement (`src/main/resources/db/migration`). Hibernate fonctionne en `ddl-auto: validate` — **ne jamais modifier le schéma via les entités**, toujours ajouter une migration `V<n>__description.sql`.
+Par défaut l'API se connecte à `jdbc:postgresql://localhost:5432/stock_db` avec l'utilisateur `postgres` et le mot de passe `postgres`. Le schéma est entièrement géré par Flyway : les migrations `V1` à `V5` (`backend/src/main/resources/db/migration`) sont appliquées automatiquement au premier démarrage. Hibernate fonctionne en `ddl-auto: validate` : toute évolution du schéma passe par une nouvelle migration `V<n>__description.sql`, jamais par les entités.
 
-## Variables d'environnement
+## 2. Backend
 
-Toutes les variables sont **optionnelles en développement** (des défauts raisonnables existent) :
+### Configuration
+
+Toutes les variables sont optionnelles en développement (défauts dans `backend/src/main/resources/application.yaml`) :
 
 | Variable | Défaut (dev) | Description |
 |---|---|---|
 | `DB_URL` | `jdbc:postgresql://localhost:5432/stock_db` | URL JDBC PostgreSQL |
 | `DB_USERNAME` | `postgres` | Utilisateur de la base |
 | `DB_PASSWORD` | `postgres` | Mot de passe de la base |
-| `JWT_SECRET` | *(secret de dev public)* | Clé de signature des JWT. **Obligatoire sans défaut en prod** — générer avec `openssl rand -base64 64` |
+| `JWT_SECRET` | secret de dev public | Clé de signature des JWT. Obligatoire sans défaut en production (générer avec `openssl rand -base64 64`) |
 | `JWT_EXPIRATION` | `86400000` | Durée de vie de l'access token en ms (24 h) |
 | `JWT_REFRESH_DAYS` | `7` | Durée de vie du refresh token en jours |
-| `MAIL_USERNAME` | *(vide)* | Compte SMTP (Gmail) pour l'envoi des bons de commande |
-| `MAIL_PASSWORD` | *(vide)* | Mot de passe / mot de passe d'application SMTP |
+| `MAIL_USERNAME` | vide | Compte SMTP (Gmail) pour l'envoi des bons de commande |
+| `MAIL_PASSWORD` | vide | Mot de passe d'application SMTP |
 
-> 🔐 Le secret JWT par défaut est **volontairement public** (réservé au développement local). Tout token signé avec doit être considéré comme non fiable. Le profil `prod` refuse de démarrer sans `JWT_SECRET`.
-
-## Démarrage (développement)
+### Lancement
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-L'API démarre sur **http://localhost:8081**.
+L'API démarre sur http://localhost:8081.
 
 - Swagger UI : http://localhost:8081/swagger-ui.html
-- OpenAPI JSON : http://localhost:8081/v3/api-docs
+- OpenAPI JSON : http://localhost:8081/api-docs
 
-### Compte bootstrap
+### Comptes créés au démarrage
 
-Au démarrage, `DataInitializer` crée automatiquement (idempotent) :
+`DataInitializer` crée de façon idempotente :
 
 | Compte | Login | Mot de passe | Rôle |
 |---|---|---|---|
 | Opérateur plateforme | `admin@sgs.local` | `admin123` | `SUPER_ADMIN` |
-| Entreprise de démo | — | — | Entreprise « SGS Demo » |
+| Entreprise de démonstration | — | — | Entreprise « SGS Demo » |
 
-Le `SUPER_ADMIN` n'est rattaché à **aucune entreprise** : il onboard les entreprises clientes depuis `/api/plateforme` (création de l'entreprise + de son premier `ADMIN`). Le endpoint `/api/auth/register` est réservé aux `ADMIN` (dans leur propre entreprise) et au `SUPER_ADMIN`.
+Le `SUPER_ADMIN` n'est rattaché à aucune entreprise : il onboard les entreprises clientes depuis la console `/plateforme` (création de l'entreprise puis de son premier `ADMIN`). Le endpoint `/api/auth/register` est réservé aux `ADMIN` (dans leur propre entreprise) et au `SUPER_ADMIN`. Le login et le mot de passe bootstrap sont définis dans `DataInitializer.java` et doivent être modifiés avant toute mise en production.
 
-## Rôles
+### Rôles
 
 | Rôle | Périmètre |
 |---|---|
-| `SUPER_ADMIN` | Backoffice plateforme : stats globales, onboarding des entreprises. `entrepriseId = null` dans le JWT |
-| `ADMIN` | Patron d'une entreprise cliente : gère SES utilisateurs et paramètres |
-| `GESTIONNAIRE` | Commandes, fournisseurs, stock, rapports (tenant) |
-| `VENDEUR` | Vente au comptoir + consultation articles/clients (tenant) |
+| `SUPER_ADMIN` | Backoffice plateforme : statistiques globales, onboarding des entreprises. `entrepriseId = null` dans le JWT |
+| `ADMIN` | Gestion de son entreprise : utilisateurs et paramètres |
+| `GESTIONNAIRE` | Commandes, fournisseurs, stock, rapports |
+| `VENDEUR` | Vente au comptoir et consultation articles/clients |
+
+## 3. Frontend
+
+Le frontend attend l'API sur http://localhost:8081. L'URL se configure dans `frontend/src/app/environments/environment.ts` (`apiUrl`, défaut `http://localhost:8081/api`).
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+L'application est disponible sur http://localhost:4200 avec rechargement à chaud. À la connexion, l'utilisateur est dirigé vers `/plateforme` (SUPER_ADMIN) ou `/dashboard` (ADMIN, GESTIONNAIRE, VENDEUR) selon son rôle.
 
 ## Tests
 
-Les tests d'intégration (règles de stock RG-02 → RG-06, isolation multi-tenant) utilisent la **même base PostgreSQL de dev** : ils ne créent que des données préfixées `TEST-` et les suppriment après chaque test. Le profil `test` redirige le SMTP vers `localhost:2525` (les envois échouent vite et sont absorbés).
+### Backend
 
 ```bash
 cd backend
 mvn test
 ```
 
-## Déploiement (production)
+Les tests d'intégration (règles de stock RG-02 à RG-06, isolation multi-tenant) utilisent la même base PostgreSQL de développement : ils ne créent que des données préfixées `TEST-` et les suppriment après chaque test. Le profil `test` redirige le SMTP vers `localhost:2525`.
+
+### Frontend
+
+```bash
+cd frontend
+npm test
+```
+
+Tests unitaires avec Vitest et jsdom. Les fichiers de tests sont co-localisés avec le code (`*.spec.ts`).
+
+## Build de production
+
+### Backend
 
 ```bash
 cd backend
@@ -98,85 +122,91 @@ mvn clean package
 java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 ```
 
-Le profil `prod` (`application-prod.yaml`) durcie la configuration :
+Le profil `prod` (`application-prod.yaml`) durcit la configuration : `JWT_SECRET` obligatoire (l'application refuse de démarrer sans), `ddl-auto: validate`, logs SQL désactivés.
 
-- `JWT_SECRET` est **obligatoire** (aucun défaut) — l'application refuse de démarrer sans ;
-- `spring.jpa.hibernate.ddl-auto=validate` (le schéma reste maîtrisé par Flyway) ;
-- logs SQL désactivés.
+### Frontend
+
+```bash
+cd frontend
+npm run build
+```
+
+Résultat optimisé dans `dist/Frontend/`. Pointer `apiUrl` vers l'URL d'API de production avant le build.
 
 ## Aperçu de l'API
 
-Tous les endpoints (hors auth et Swagger) exigent le header `Authorization: Bearer <access token>`.
+Tous les endpoints (hors authentification et Swagger) exigent le header `Authorization: Bearer <access token>`.
 
-| Groupe | Base | Rôle |
+| Groupe | Base | Contenu |
 |---|---|---|
 | Authentification | `/api/auth` | `login`, `register`, `refresh`, `logout`, `me` |
 | Articles | `/api/articles` | CRUD référentiel produits |
 | Catégories | `/api/categories` | CRUD |
 | Clients | `/api/clients` | CRUD |
 | Fournisseurs | `/api/fournisseurs` | CRUD |
-| Commandes fournisseur | `/api/commandes-fournisseur` | Création, réception (complète/partielle), annulation |
+| Commandes fournisseur | `/api/commandes-fournisseur` | Création, réception complète ou partielle, annulation |
 | Commandes client | `/api/commandes-client` | Création, validation |
-| Ventes | `/api/ventes` | Création seule (décrémente le stock immédiatement, historique immuable) |
-| Mouvements de stock | `/api/mouvements-stock` | Historique + ajustements manuels (motif obligatoire) |
+| Ventes | `/api/ventes` | Création seule (décrémente le stock, historique immuable) |
+| Mouvements de stock | `/api/mouvements-stock` | Historique et ajustements manuels (motif obligatoire) |
 | Stock | `/api/stock` | État, alertes de seuil, valorisation (lecture seule) |
-| Dashboard | `/api/dashboard` | KPIs + graphiques 30 jours |
+| Dashboard | `/api/dashboard` | KPIs et graphiques 30 jours |
 | Utilisateurs | `/api/utilisateurs` | Gestion des comptes |
 | Entreprises | `/api/entreprises` | Paramètres de l'entreprise |
-| Plateforme | `/api/plateforme` | **SUPER_ADMIN uniquement** |
+| Plateforme | `/api/plateforme` | SUPER_ADMIN uniquement |
 
-### Flux de connexion
+Flux d'authentification :
 
 ```
 POST /api/auth/login { login, motDePasse }
   → 200 { accessToken, refreshToken, user }
 
-# JWT expiré (rotation : l'ancien refresh est consommé)
 POST /api/auth/refresh { refreshToken }
-  → 200 { accessToken, refreshToken, user }
+  → 200 { accessToken, refreshToken, user }   (rotation : l'ancien refresh est consommé)
 
-# Déconnexion (révoque le refresh token, idempotent)
 POST /api/auth/logout { refreshToken }
+  → révoque le refresh token, idempotent
 ```
 
 ## Règles métier clés
 
-1. **Multi-tenancy** : chaque requête est scopée par l'`entrepriseId` du JWT (`CurrentUserService`). Les données d'une autre entreprise renvoient **404**, jamais 403 (pas de fuite d'existence).
-2. **Traçabilité du stock** : `MvtStkService` est le **seul** code autorisé à modifier `Article.stockActuel`. Aucun mouvement sans trace `MvtStk` (ENTREE / SORTIE / AJUSTEMENT).
-3. **Stock jamais négatif** : `StockInsuffisantException` + `@Transactional` ⇒ une vente multi-lignes est **refusée en bloc**, jamais partielle.
-4. **Ventes immuables** : une vente enregistrée est un fait historique — pas d'update/delete.
-5. **Réceptions partielles** : une commande fournisseur peut être reçue en plusieurs fois ; double réception refusée (le stock ne serait compté deux fois).
+1. Multi-tenancy : chaque requête est scopée par l'`entrepriseId` du JWT. Les données d'une autre entreprise renvoient 404, jamais 403.
+2. Traçabilité : `MvtStkService` est le seul code autorisé à modifier `Article.stockActuel` ; aucun mouvement sans trace `MvtStk` (ENTREE / SORTIE / AJUSTEMENT).
+3. Stock jamais négatif : une vente multi-lignes est refusée en bloc si le stock est insuffisant, jamais partiellement appliquée.
+4. Ventes immuables : une vente enregistrée est un fait historique, sans update ni delete.
+5. Réceptions partielles : une commande fournisseur peut être reçue en plusieurs fois ; une double réception est refusée.
 
 ## Structure du projet
 
 ```
-backend/
-├── pom.xml                          # Dépendances Maven
-└── src/
-    ├── main/
-    │   ├── java/com/sgs/backend/
-    │   │   ├── article/             # Un package = entité + repo + service + controller + dto/
-    │   │   ├── categorie/
-    │   │   ├── client/
-    │   │   ├── fournisseur/
-    │   │   ├── commandeClient/
-    │   │   ├── commandeFournisseur/
-    │   │   ├── vente/               # Vente + LigneVente
-    │   │   ├── mvtStk/              # Cœur du stock (mouvements)
-    │   │   ├── stock/               # Vues lecture seule (état, alertes, valorisation)
-    │   │   ├── dashboard/           # KPIs et graphiques
-    │   │   ├── entreprise/          # Tenant
-    │   │   ├── utilisateur/         # Comptes
-    │   │   ├── auth/                # Refresh tokens
-    │   │   ├── notification/        # Emails best-effort
-    │   │   ├── plateforme/          # Backoffice SUPER_ADMIN
-    │   │   ├── roles/               # UserRole
-    │   │   ├── common/              # AbstractEntity, gestion d'erreurs globale
-    │   │   └── config/              # Security, JWT, CORS, OpenAPI, bootstrap
-    │   └── resources/
-    │       ├── application.yaml     # Config dev (défauts inclus)
-    │       ├── application-prod.yaml
-    │       └── db/migration/        # Migrations Flyway V1 → V5
-    └── test/
-        └── java/com/sgs/backend/integration/   # Tests d'intégration stock
+.
+├── backend/
+│   ├── pom.xml                                 # Dépendances Maven
+│   └── src/
+│       ├── main/java/com/sgs/backend/          # Un package par domaine métier
+│       │   ├── article/ categorie/ client/ fournisseur/
+│       │   ├── commandeClient/ commandeFournisseur/ vente/
+│       │   ├── mvtStk/                         # Cœur du stock (mouvements)
+│       │   ├── stock/ dashboard/               # Vues lecture seule, KPIs
+│       │   ├── entreprise/ utilisateur/ auth/  # Tenants, comptes, tokens
+│       │   ├── plateforme/                     # Backoffice SUPER_ADMIN
+│       │   ├── common/ config/                 # Erreurs globales, sécurité, bootstrap
+│       │   └── ...
+│       ├── main/resources/
+│       │   ├── application.yaml                # Config dev (défauts inclus)
+│       │   ├── application-prod.yaml           # Config production
+│       │   └── db/migration/                   # Migrations Flyway V1 → V5
+│       └── test/java/com/sgs/backend/integration/
+└── frontend/
+    ├── package.json
+    └── src/app/
+        ├── core/                               # Auth JWT, guards, intercepteurs, layout
+        ├── shared/                             # Composants, pipes, directives réutilisables
+        ├── environments/                       # URL de l'API par environnement
+        └── features/                           # Un dossier par module, lazy loading
+            ├── auth/ dashboard/ articles/ categories/
+            ├── commandes-client/ commandes-fournisseur/ ventes/
+            ├── clients/ fournisseurs/ rapports/
+            └── utilisateurs/ entreprises/ plateforme/
 ```
+
+Chaque module backend suit le découpage `Controller` / `Service` / `Repository` / DTOs ; chaque module frontend contient ses routes en lazy loading, ses composants et son service d'appels API.
