@@ -1,0 +1,182 @@
+<div class="animate-view">
+  <!-- ═══════════ En-tête ═══════════ -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Plateforme</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Vue d'ensemble</h1>
+      <p class="mt-1.5 max-w-xl text-sm text-gray-600">
+        État du parc : entreprises clientes hébergées, comptes actifs et activité générée, toutes sociétés confondues.
+      </p>
+    </div>
+    <a
+      routerLink="/plateforme/entreprises"
+      class="inline-flex items-center gap-2 rounded-sm bg-ink-850 px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all duration-200 ease-soft hover:-translate-y-px hover:bg-ink-800 hover:shadow-md"
+    >
+      <app-icon name="building-2" [size]="16" />
+      Gérer les entreprises
+    </a>
+  </div>
+
+  @if (chargement()) {
+    <div class="grid gap-4.5">
+      <div class="grid grid-cols-4 gap-4.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="h-[118px] animate-pulse rounded-lg border border-line bg-surface"></div>
+        }
+      </div>
+      <div class="h-[220px] animate-pulse rounded-lg border border-line bg-surface"></div>
+    </div>
+  } @else if (stats(); as s) {
+    <!-- ═══════════ KPIs parc ═══════════ -->
+    <div class="mb-4.5 grid grid-cols-4 gap-4.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-gold-100 text-gold-600">
+            <app-icon name="building-2" [size]="18" />
+          </div>
+          <span class="rounded-full bg-success-bg px-2.5 py-1 text-2xs font-bold uppercase tracking-wide text-success">
+            +{{ s.nbNouvellesEntreprisesDuMois }} ce mois
+          </span>
+        </div>
+        <div class="font-mono text-[28px] font-semibold tracking-[-0.02em]">{{ s.nbEntreprises | number }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Entreprises clientes</div>
+      </div>
+
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-info-bg text-info">
+            <app-icon name="users" [size]="18" />
+          </div>
+        </div>
+        <div class="font-mono text-[28px] font-semibold tracking-[-0.02em]">{{ s.nbUtilisateurs | number }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Comptes utilisateurs (dont {{ s.nbAdmins }} admins)</div>
+      </div>
+
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-success-bg text-success">
+            <app-icon name="user" [size]="18" />
+          </div>
+        </div>
+        <div class="font-mono text-[28px] font-semibold tracking-[-0.02em]">{{ s.nbClients | number }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Clients finaux</div>
+      </div>
+
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-surface-alt text-gray-700">
+            <app-icon name="package" [size]="18" />
+          </div>
+          <span
+            class="rounded-full px-2.5 py-1 text-2xs font-bold uppercase tracking-wide"
+            [class]="s.nbArticlesEnAlerte > 0 ? 'bg-danger-bg text-danger' : 'bg-success-bg text-success'"
+          >
+            {{ s.nbArticlesEnAlerte }} en alerte
+          </span>
+        </div>
+        <div class="font-mono text-[28px] font-semibold tracking-[-0.02em]">{{ s.nbArticles | number }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Articles gérés</div>
+      </div>
+    </div>
+
+    <!-- ═══════════ Bandeau activité du mois ═══════════ -->
+    <div class="mb-4.5 grid grid-cols-3 gap-4.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
+      <div class="flex items-center gap-4 rounded-lg border border-line bg-surface p-5 shadow-xs">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-gold-100 text-gold-600">
+          <app-icon name="shopping-cart" [size]="19" />
+        </div>
+        <div class="min-w-0">
+          <div class="truncate font-mono text-[22px] font-semibold tracking-[-0.02em]">{{ formatCA(s.chiffreAffairesDuMois) }}</div>
+          <div class="text-[12.5px] text-gray-600">CA du mois, toutes entreprises</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 rounded-lg border border-line bg-surface p-5 shadow-xs">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-info-bg text-info">
+          <app-icon name="trending-up" [size]="19" />
+        </div>
+        <div class="min-w-0">
+          <div class="font-mono text-[22px] font-semibold tracking-[-0.02em]">{{ s.nbVentesDuMois | number }}</div>
+          <div class="text-[12.5px] text-gray-600">Ventes depuis le 1er du mois ({{ s.nbVentes | number }} au total)</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 rounded-lg border border-line bg-surface p-5 shadow-xs">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-surface-alt text-gray-700">
+          <app-icon name="clipboard-list" [size]="19" />
+        </div>
+        <div class="min-w-0">
+          <div class="font-mono text-[22px] font-semibold tracking-[-0.02em]">{{ s.nbCommandesEnCours | number }}</div>
+          <div class="text-[12.5px] text-gray-600">Commandes clients en cours</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ Dernières entreprises + santé ═══════════ -->
+    <div class="grid grid-cols-5 gap-4.5 max-lg:grid-cols-1">
+      <div class="col-span-3 rounded-lg border border-line bg-surface p-5.5">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="font-display text-lg font-[650]">Récemment onboardées</h3>
+          <a routerLink="/plateforme/entreprises" class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 transition-colors hover:text-gold-600">
+            Tout voir
+            <app-icon name="arrow-right" [size]="14" />
+          </a>
+        </div>
+
+        @if (s.dernieresEntreprises.length > 0) {
+          <ul class="divide-y divide-line">
+            @for (e of s.dernieresEntreprises; track e.id) {
+              <li class="flex items-center gap-3.5 py-3 first:pt-0 last:pb-0">
+                <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-ink-800 text-xs font-bold text-white">
+                  {{ e.nom.charAt(0) }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <b class="block truncate text-sm text-gray-900">{{ e.nom }}</b>
+                  <span class="block truncate text-xs text-gray-600">
+                    {{ e.ville || e.mail || '—' }}
+                  </span>
+                </div>
+                <span class="shrink-0 rounded-full bg-surface-alt px-2.5 py-1 text-2xs font-bold text-gray-600">
+                  {{ e.nbUtilisateurs }} compte{{ e.nbUtilisateurs > 1 ? 's' : '' }}
+                </span>
+                <span class="hidden shrink-0 text-xs text-gray-400 sm:block">{{ formatDate(e.createdAt) }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="py-6 text-center text-sm text-gray-400">Aucune entreprise onboardée pour l'instant.</p>
+        }
+      </div>
+
+      <div class="col-span-2 rounded-lg border border-line bg-surface p-5.5">
+        <h3 class="mb-4 font-display text-lg font-[650]">Santé du parc</h3>
+        <p class="mb-5 max-w-md text-sm leading-relaxed text-gray-600">
+          Depuis la console, vous onboardz les entreprises clientes : fiche + premier compte Administrateur,
+          avec un espace totalement isolé (catalogue, stock, ventes) pour chacune.
+        </p>
+        <ul class="space-y-3.5">
+          <li class="flex items-center justify-between gap-3 rounded-md bg-surface-alt px-4 py-3">
+            <span class="text-sm text-gray-700">Entreprises actives ce mois</span>
+            <b class="font-mono text-sm text-success">+{{ s.nbNouvellesEntreprisesDuMois }}</b>
+          </li>
+          <li class="flex items-center justify-between gap-3 rounded-md bg-surface-alt px-4 py-3">
+            <span class="text-sm text-gray-700">Articles sous le seuil d'alerte</span>
+            <b class="font-mono text-sm" [class.text-danger]="s.nbArticlesEnAlerte > 0" [class.text-success]="s.nbArticlesEnAlerte === 0">
+              {{ s.nbArticlesEnAlerte | number }}
+            </b>
+          </li>
+          <li class="flex items-center justify-between gap-3 rounded-md bg-surface-alt px-4 py-3">
+            <span class="text-sm text-gray-700">Ratio comptes / entreprise</span>
+            <b class="font-mono text-sm text-gray-900">
+              {{ s.nbEntreprises > 0 ? (s.nbUtilisateurs / s.nbEntreprises | number : '1.1-1') : '—' }}
+            </b>
+          </li>
+        </ul>
+      </div>
+    </div>
+  } @else {
+    <div class="rounded-lg border border-line bg-surface p-14 text-center text-sm text-gray-400">
+      Statistiques indisponibles. Vérifiez que le backend est démarré.
+    </div>
+  }
+</div>

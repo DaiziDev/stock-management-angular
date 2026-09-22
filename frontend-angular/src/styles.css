@@ -1,0 +1,466 @@
+/* =========================================================
+   🎨 DESIGN SYSTEM — FICHIER UNIQUE
+   ---------------------------------------------------------
+   Tout le design system tient ICI, rien d'autre :
+     1. les COULEURS : marque (encre/or), teintes claires,
+        fonds, textes, sémantiques + les variantes dark mode.
+     2. la TYPOGRAPHIE : familles de polices + échelle des tailles.
+     3. quelques formes : rayons, ombres, courbes, animations.
+
+   Les composants ne réécrivent AUCUN style : ils utilisent
+   les utilitaires Tailwind générés depuis ces tokens
+   (ex. bg-ink-950, text-gold-500, font-display, rounded-sm...).
+
+   👉 Changer une valeur ici = changement partout. C'est tout.
+   ========================================================= */
+
+@import "tailwindcss";
+
+/* =========================================================
+   0. COMMENT L'UTILISER — guide rapide
+   ---------------------------------------------------------
+   RÈGLE D'OR
+   Dans un composant, on n'écrit JAMAIS de CSS : on applique
+   des classes utilitaires générées depuis les tokens ci-dessous.
+   Si un style manque, on le construit avec des utilitaires
+   Tailwind (ou on ajoute un token ICI).
+
+   COULEURS → utilitaires
+   Chaque --color-* génère 3 utilitaires :
+     --color-ink-950  →  bg-ink-950    (fond)
+                         text-ink-950  (texte)
+                         border-ink-950 (bordure)
+   + une variante d'opacité : bg-ink-950/15, text-gold-500/80...
+
+   Palette (rappel) :
+     ink-950→700     : verts profonds de marque (sidebar, boutons)
+     gold-600→100    : l'accent or (actions, état actif, logo)
+     fog-50→700      : textes clairs SUR fond sombre (sidebar, login)
+     canvas/surface/surface-alt : les 3 fonds de l'app
+     line            : bordures
+     gray-900→400    : textes neutres (900 = principal, 400 = secondaire)
+     success/danger/info (+ -bg) : états sémantiques (avec leur pastille)
+
+   TYPOGRAPHIE → utilitaires
+     Familles : font-display (titres), font-body (texte), font-mono (chiffres/codes)
+     Tailles  : text-2xs(10) text-xs(11) text-sm(13) text-base(14.5)
+                text-lg(17) text-xl(19) text-2xl(24) text-3xl(29) text-4xl(46)
+     Graisses : font-medium, font-semibold, font-bold (ou font-[650] pour Fraunces)
+
+   FORMES → utilitaires
+     Rayons : rounded-xs(6) rounded-sm(9) rounded-md(14) rounded-lg(20)
+     Ombres : shadow-xs, shadow-sm, shadow-md, shadow-lg (subtile → forte)
+
+   MOUVEMENT → utilitaires
+     Courbes    : ease-soft (micro-interactions), ease-marked (modales, vues)
+     Animations : animate-view (entrée de page), animate-orb (fond login)
+     Transitions : transition-all, transition-colors, transition-[left]...
+
+   RESPONSIVE → variantes (points de rupture du projet)
+     max-lg:  ≤1180px (tableaux de bord)    max-sm:  ≤640px (mobile)
+     max-md:  ≤900px  (sidebar repliée)     max-xs:  ≤420px (très petit)
+     Ex. : class="grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1"
+
+   DARK MODE
+     Piloté par la classe .dark sur <html> (ThemeService + bouton navbar) :
+     défaut = suit l'OS, choix manuel mémorisé. Ne jamais coder une couleur
+     en dur dans un composant, sinon elle ne basculera pas.
+
+   CHANGER UNE VALEUR
+     On modifie UNIQUEMENT ce fichier → toute l'app est mise à jour.
+     Ex. : --color-gold-500: #c9922e;  →  nouveau doré partout.
+
+   EXEMPLE — un bouton primaire :
+     <button class="inline-flex items-center gap-2 rounded-sm bg-ink-850 px-5 py-3
+                    text-sm font-semibold text-white shadow-xs transition-all duration-200
+                    ease-soft hover:-translate-y-px hover:bg-ink-800 hover:shadow-md">
+       Enregistrer
+     </button>
+
+   EXEMPLE — les variables CSS restent accessibles si besoin :
+     style="background: var(--color-ink-950)"
+   ========================================================= */
+
+/* =========================================================
+   1. TOKENS — @theme génère les variables CSS ET les classes
+      utilitaires (bg-*, text-*, font-*, rounded-*, shadow-*...)
+   ========================================================= */
+@theme {
+  /* ---- Marque : l'encre (verts profonds) ---- */
+  --color-ink-950: #0a1e20;
+  --color-ink-900: #0f2a2d;
+  --color-ink-850: #132f32;
+  --color-ink-800: #173a3e;
+  --color-ink-700: #204c50;
+
+  /* ---- Marque : l'or (l'accent) ---- */
+  --color-gold-600: #a9761f;
+  --color-gold-500: #c9922e;
+  --color-gold-400: #ddae55;
+  --color-gold-100: #fbf0dc;
+
+  /* ---- Teintes claires d'encre : textes SUR fond sombre
+         (sidebar, panneau de connexion) ---- */
+  --color-fog-50: #eaf1ee;
+  --color-fog-100: #cbdad5;
+  --color-fog-200: #b7c9c4;
+  --color-fog-300: #9fb3ad;
+  --color-fog-400: #8fa69f;
+  --color-fog-500: #7e9891;
+  --color-fog-600: #6f8983;
+  --color-fog-700: #4e6963;
+
+  /* ---- Fonds & surfaces ---- */
+  --color-canvas: #f6f7f8;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f1f2f4;
+
+  /* ---- Bordures ---- */
+  --color-line: #e6e8eb;
+
+  /* ---- Textes neutres ---- */
+  --color-gray-900: #12191b;
+  --color-gray-700: #33403f;
+  --color-gray-600: #5b6a68;
+  --color-gray-400: #96a3a1;
+
+  /* ---- Sémantiques ---- */
+  --color-success: #1e9a55;
+  --color-success-bg: #e5f6eb;
+  --color-danger: #dd4b3e;
+  --color-danger-bg: #fbeae7;
+  --color-info: #2d6fe0;
+  --color-info-bg: #e9f0fe;
+
+  /* ---- Typographie : familles ---- */
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* ---- Typographie : échelle des tailles ---- */
+  --text-2xs: 10px;
+  --text-2xs--line-height: 1.4;
+  --text-xs: 11px;
+  --text-xs--line-height: 1.4;
+  --text-sm: 13px;
+  --text-sm--line-height: 1.45;
+  --text-base: 14.5px;
+  --text-base--line-height: 1.5;
+  --text-lg: 17px;
+  --text-lg--line-height: 1.4;
+  --text-xl: 19px;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 29px;
+  --text-3xl--line-height: 1.15;
+  --text-4xl: 46px;
+  --text-4xl--line-height: 1.05;
+
+  /* ---- Formes : rayons ---- */
+  --radius-xs: 6px;
+  --radius-sm: 9px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* ---- Formes : ombres ---- */
+  --shadow-xs: 0 1px 2px rgb(10 30 32 / 0.05);
+  --shadow-sm: 0 2px 10px rgb(10 30 32 / 0.06);
+  --shadow-md: 0 12px 30px rgb(10 30 32 / 0.1);
+  --shadow-lg: 0 30px 70px rgb(10 30 32 / 0.24);
+
+  /* ---- Mouvement : courbes ---- */
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-marked: cubic-bezier(0.19, 1, 0.22, 1);
+
+  /* ---- Mouvement : animations ---- */
+  --animate-view: view-in 0.4s var(--ease-marked);
+  --animate-orb: orb-float 12s var(--ease-soft) infinite alternate;
+
+  @keyframes view-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes orb-float {
+    to {
+      transform: translate(30px, -24px) scale(1.08);
+    }
+  }
+
+  /* ---- Responsive : points de rupture du projet ---- */
+  --breakpoint-md: 900px; /* tablette / sidebar repliée */
+  --breakpoint-lg: 1180px; /* tableaux de bord */
+  --breakpoint-xs: 420px; /* très petit écran */
+
+  /* ---- Layout : largeur de la sidebar ---- */
+  --sbw: 264px;
+}
+
+/* =========================================================
+   2. DARK MODE — les mêmes tokens, valeurs sombres.
+      Piloté par la classe .dark sur <html> (ThemeService) :
+      - défaut : suit la préférence de l'OS (system) ;
+      - l'utilisateur peut forcer clair/sombre depuis la navbar,
+      le choix est mémorisé dans localStorage.
+      👉 C'est la stratégie recommandée par la doc Tailwind v4 :
+      @custom-variant dark (&:where(.dark, .dark *)) pour les
+      utilitaires dark:* éventuels.
+   ========================================================= */
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --color-canvas: #0a1a1c;
+  --color-surface: #12282b;
+  --color-surface-alt: #0e2123;
+  --color-line: #21373a;
+  --color-gray-900: #e7efeb;
+  --color-gray-700: #b7c7c1;
+  --color-gray-600: #8ba19b;
+  --color-gray-400: #5f7570;
+  --color-gold-500: #dba94e;
+  --color-gold-100: #3a2f17;
+  --color-success: #38c473;
+  --color-success-bg: #12351f;
+  --color-danger: #ef6b5c;
+  --color-danger-bg: #3e1f1b;
+  --color-info: #6b9df0;
+  --color-info-bg: #172a45;
+  color-scheme: dark;
+}
+
+/* Sans la classe, l'app est claire même si l'OS est sombre :
+   c'est le "clair forcé" quand l'utilisateur choisit light. */
+:root:not(.dark) {
+  color-scheme: light;
+}
+
+/* =========================================================
+   3. BASE — styles globaux minimaux (le reste = utilitaires)
+   ========================================================= */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--color-canvas);
+    color: var(--color-gray-900);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-gold-100);
+    color: var(--color-ink-900);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect de la préférence "réduire les animations" (accessibilité) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+/* =========================================================
+   4. COMPOSANTS PARTAGÉS — kit de classes du design system
+   ---------------------------------------------------------
+   Les patterns répétés (champ de formulaire, boutons, cartes
+   KPI, tableaux) deviennent des classes utilitaires locales :
+   moins de duplication que des utilitaires Tailwind repris
+   dans chaque template, et un seul endroit pour les ajuster.
+   ========================================================= */
+@layer components {
+  .champ {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--color-line);
+    background: var(--color-surface);
+    padding: 0.75rem 0.875rem;
+    font-size: var(--text-base);
+    color: var(--color-gray-900);
+    transition: border-color 0.2s var(--ease-soft), box-shadow 0.2s var(--ease-soft);
+  }
+  .champ:focus {
+    outline: none;
+    border-color: var(--color-ink-700);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ink-800) 10%, transparent);
+  }
+  .champ::placeholder {
+    color: var(--color-gray-400);
+  }
+  .champ:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .etiquette {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--color-gray-600);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1.25rem;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-soft);
+  }
+  .btn:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .btn-primaire {
+    background: var(--color-ink-850);
+    color: #fff;
+    box-shadow: var(--shadow-xs);
+  }
+  .btn-primaire:hover {
+    transform: translateY(-1px);
+    background: var(--color-ink-800);
+    box-shadow: var(--shadow-md);
+  }
+  .btn-or {
+    background: var(--color-gold-500);
+    color: var(--color-ink-950);
+    box-shadow: 0 4px 14px rgb(201 146 46 / 0.28);
+  }
+  .btn-or:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    box-shadow: 0 8px 22px rgb(201 146 46 / 0.38);
+  }
+  .btn-secondaire {
+    background: transparent;
+    color: var(--color-gray-600);
+    border: 1.5px solid var(--color-line);
+  }
+  .btn-secondaire:hover {
+    background: var(--color-surface-alt);
+    color: var(--color-ink-800);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--color-danger);
+    border: 1.5px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+  }
+  .btn-danger:hover {
+    background: var(--color-danger-bg);
+  }
+
+  .carte {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-line);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .th {
+    border-bottom: 1px solid var(--color-line);
+    background: var(--color-surface-alt);
+    padding: 0.75rem 1.125rem;
+    text-align: left;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-gray-400);
+    white-space: nowrap;
+  }
+
+  .td {
+    padding: 0.875rem 1.125rem;
+    font-size: 13.6px;
+    vertical-align: middle;
+  }
+
+  .ligne-table:hover {
+    background: var(--color-surface-alt);
+  }
+
+  /* Badge de statut de commande — couleur pilotée par data-statut
+     (EN_COURS/EN_ATTENTE or, VALIDEE/RECUE/LIVREE vert, EXPEDIEE/
+     RECUE_PARTIELLEMENT bleu, ANNULEE rouge). Compatibilité dark mode
+     via les tokens sémantiques. */
+  .badge-statut {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.2rem 0.65rem;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-statut[data-statut='EN_COURS'] {
+    background: var(--color-gold-100);
+    color: var(--color-gold-600);
+  }
+  .badge-statut[data-statut='EN_ATTENTE'] {
+    background: var(--color-gold-100);
+    color: var(--color-gold-600);
+  }
+  .badge-statut[data-statut='VALIDEE'] {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+  .badge-statut[data-statut='RECUE'] {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+  .badge-statut[data-statut='EXPEDIEE'] {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+  }
+  .badge-statut[data-statut='LIVREE'] {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+  .badge-statut[data-statut='RECUE_PARTIELLEMENT'] {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+  }
+  .badge-statut[data-statut='ANNULEE'] {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+  }
+}
+
+/* =========================================================
+   5. UTILITAIRES DE SCROLL — masque les barres de défilement
+      des zones de navigation (sidebar) tout en gardant le
+      défilement fonctionnel (molette, tactile, clavier).
+   ========================================================= */
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;              /* Firefox */
+    -ms-overflow-style: none;           /* IE/Edge legacy */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;                      /* Chrome, Safari, Opera */
+  }
+}

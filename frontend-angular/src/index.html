@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>SGS — Système de Gestion de Stock</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,550;9..144,650;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  >
+</head>
+<body>
+  <script>
+    // Anti-flash (FOUC) : pose la classe .dark AVANT le premier rendu, en
+    // reprenant la même logique que ThemeService (localStorage > OS). Le
+    // service Angular reprendra la main ensuite, sans à-coups.
+    (function () {
+      try {
+        var m = localStorage.getItem('sgs.theme');
+        var sombre =
+          m === 'dark' ||
+          (m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (sombre) document.documentElement.classList.add('dark');
+      } catch (e) {
+        /* localStorage indisponible : thème clair par défaut */
+      }
+    })();
+  </script>
+  <app-root></app-root>
+</body>
+</html>

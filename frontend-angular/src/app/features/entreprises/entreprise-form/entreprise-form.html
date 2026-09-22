@@ -1,0 +1,12 @@
+<h1>{{ editId ? 'Modifier' : 'Nouvelle' }} entreprise</h1>
+<form [formGroup]="form" (ngSubmit)="enregistrer()">
+  <label>Nom<input formControlName="nom"></label>
+  <label>Adresse 1<input formControlName="adresse1"></label>
+  <label>Adresse 2<input formControlName="adresse2"></label>
+  <label>Ville<input formControlName="ville"></label>
+  <label>Code postal<input formControlName="codePostal"></label>
+  <label>Pays<input formControlName="pays"></label>
+  <label>Mail<input formControlName="mail" type="email"></label>
+  <label>Téléphone<input formControlName="numTel"></label>
+  <button type="submit">{{ editId ? 'Enregistrer' : 'Créer' }}</button>
+</form>

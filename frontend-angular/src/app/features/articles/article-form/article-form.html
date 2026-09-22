@@ -1,0 +1,96 @@
+<div class="animate-view mx-auto max-w-[640px]">
+  <div class="mb-7">
+    <a routerLink="/articles" class="mb-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 hover:text-gold-600">
+      <app-icon name="arrow-right" [size]="14" class="rotate-180" />
+      Retour aux articles
+    </a>
+    <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">{{ editId ? "Modifier l'article" : 'Nouvel article' }}</h1>
+    <p class="mt-1.5 text-sm text-gray-600">Le prix TTC est recalculé automatiquement à partir du HT et de la TVA.</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="enregistrer()" class="carte p-6 max-sm:p-4">
+    <h3 class="mb-4 font-display text-lg font-[650]">Informations produit</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div>
+        <label class="etiquette" for="codeArticle">Code article *</label>
+        <input id="codeArticle" type="text" formControlName="codeArticle" class="champ font-mono" placeholder="Ex. : ART-001" />
+      </div>
+      <div>
+        <label class="etiquette" for="designation">Désignation *</label>
+        <input id="designation" type="text" formControlName="designation" class="champ" placeholder="Ex. : Sac de riz 25 kg" />
+      </div>
+      <div class="col-span-2 max-md:col-span-1">
+        <label class="etiquette" for="categorieId">Catégorie *</label>
+        <select id="categorieId" formControlName="categorieId" class="champ">
+          <option [ngValue]="null" disabled>-- choisir une catégorie --</option>
+          @for (c of categorieService.categories(); track c.id) {
+            <option [ngValue]="c.id">{{ c.designation }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Photo produit -->
+    <div class="mt-5 flex flex-wrap items-start gap-5">
+      <span
+        class="relative flex h-[104px] w-[104px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-line bg-surface-alt"
+      >
+        @if (photo(); as p) {
+          <img [src]="p" alt="Aperçu de la photo de l'article" class="h-full w-full object-cover" />
+        } @else {
+          <app-icon class="text-gray-300" name="image" [size]="34" />
+        }
+        @if (photoEnCours()) {
+          <span class="absolute inset-0 flex items-center justify-center bg-surface/80">
+            <span class="h-6 w-6 animate-spin rounded-full border-2 border-gold-500 border-t-transparent"></span>
+          </span>
+        }
+      </span>
+      <div class="min-w-[200px] flex-1">
+        <span class="etiquette">Photo du produit (optionnelle)</span>
+        <p class="mb-2.5 text-xs leading-relaxed text-gray-400">
+          JPG ou PNG, redimensionnée automatiquement (~440px). Visible dans le point de vente.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn btn-secondaire" (click)="choisirPhoto()" [disabled]="photoEnCours()">
+            <app-icon name="image" [size]="15" />
+            {{ photo() ? 'Changer la photo' : 'Choisir une photo' }}
+          </button>
+          @if (photo()) {
+            <button type="button" class="btn btn-secondaire text-danger hover:text-danger" (click)="retirerPhoto()">
+              <app-icon name="trash" [size]="15" />
+              Retirer
+            </button>
+          }
+        </div>
+        @if (erreurPhoto()) {
+          <p class="mt-2 text-xs text-danger">{{ erreurPhoto() }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="my-5 border-t border-dashed border-line"></div>
+    <h3 class="mb-4 font-display text-lg font-[650]">Tarification</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div>
+        <label class="etiquette" for="prixUnitaireHt">Prix unitaire HT *</label>
+        <input id="prixUnitaireHt" type="number" formControlName="prixUnitaireHt" min="0" step="1" class="champ font-mono" />
+      </div>
+      <div>
+        <label class="etiquette" for="tauxTva">Taux TVA (%) *</label>
+        <input id="tauxTva" type="number" formControlName="tauxTva" min="0" max="100" step="0.01" class="champ font-mono" />
+      </div>
+    </div>
+
+    @if (erreur()) {
+      <div class="mt-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+    }
+
+    <div class="mt-5 flex flex-wrap justify-end gap-2.5 max-sm:grid max-sm:grid-cols-1">
+      <a routerLink="/articles" class="btn btn-secondaire">Annuler</a>
+      <button type="submit" [disabled]="form.invalid || envoiEnCours()" class="btn btn-primaire">
+        {{ envoiEnCours() ? 'Enregistrement…' : editId ? 'Enregistrer' : "Créer l'article" }}
+      </button>
+    </div>
+  </form>
+</div>

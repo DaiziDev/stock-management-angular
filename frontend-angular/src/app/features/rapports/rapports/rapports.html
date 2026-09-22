@@ -1,0 +1,173 @@
+<div class="animate-view">
+  <!-- En-tête -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Pilotage</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Rapports & stock</h1>
+      <p class="mt-1.5 text-sm text-gray-600">Valorisation du stock, alertes et ajustements d'inventaire tracés.</p>
+    </div>
+    <a routerLink="/mouvements-stock" class="btn btn-secondaire">
+      <app-icon name="arrow-left-right" [size]="15" />
+      Historique des mouvements
+    </a>
+  </div>
+
+  @if (erreur() && chargement()) {
+    <div class="carte p-14 text-center text-sm text-gray-400">
+      <app-icon class="mx-auto mb-3 opacity-50" name="bar-chart-3" [size]="34" />
+      <b class="mb-1 block text-[14.5px] text-gray-600">Impossible de charger les données</b>
+      {{ erreur() }}
+      <div class="mt-4">
+        <button type="button" class="btn btn-secondaire" (click)="charger()">Réessayer</button>
+      </div>
+    </div>
+  } @else {
+    <!-- KPIs -->
+    <div class="mb-4.5 grid grid-cols-3 gap-4.5 max-md:grid-cols-1">
+      <div class="carte flex items-center gap-4 p-5">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gold-100 text-gold-600">
+          <app-icon name="package" [size]="20" />
+        </span>
+        <div>
+          <span class="block text-2xs font-semibold uppercase tracking-wider text-gray-400">Valorisation du stock (HT)</span>
+          @if (valorisation(); as v) {
+            <b class="block font-display text-2xl font-[650]">{{ v.valeurTotale | number : '1.0-0' }} FCFA</b>
+          } @else {
+            <b class="block font-display text-2xl font-[650] text-gray-300">—</b>
+            <span class="text-xs text-gray-400">Non disponible</span>
+          }
+      </div>
+      </div>
+      <div class="carte flex items-center gap-4 p-5">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-danger-bg text-danger">
+          <app-icon name="bell" [size]="20" />
+        </span>
+        <div>
+          <span class="block text-2xs font-semibold uppercase tracking-wider text-gray-400">Articles en alerte</span>
+          <b class="block font-display text-2xl font-[650]" [class]="nbAlertes() > 0 ? 'text-danger' : ''">{{ nbAlertes() }}</b>
+        </div>
+      </div>
+      <div class="carte flex-1 flex items-center gap-4 p-5">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-surface-alt text-gray-600">
+          <app-icon name="x" [size]="20" />
+        </span>
+        <div>
+          <span class="block text-2xs font-semibold uppercase tracking-wider text-gray-400">Ruptures (stock 0)</span>
+          <b class="block font-display text-2xl font-[650]">{{ nbRuptures() }}</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <div class="relative min-w-[200px] max-w-[280px] flex-1">
+        <app-icon class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="15" />
+        <input
+          type="text"
+          placeholder="Rechercher un article…"
+          [value]="recherche()"
+          (input)="recherche.set($any($event.target).value)"
+          class="w-full rounded-sm border-[1.5px] border-line bg-surface py-2.5 pl-9 pr-3 text-[13.4px] focus:border-ink-700 focus:outline-none"
+        />
+      </div>
+      <div class="flex rounded-sm border-[1.5px] border-line bg-surface p-1">
+        @for (f of filtresAlerte; track f.v) {
+          <button
+            type="button"
+            class="rounded-[6px] px-3.5 py-1.5 text-xs font-semibold transition-colors"
+            [class]="filtreAlerte() === f.v ? 'bg-ink-950 text-white' : 'text-gray-600 hover:text-ink-800'"
+            (click)="filtreAlerte.set(f.v)"
+          >
+            {{ f.l }}
+          </button>
+        }
+      </div>
+      <span class="text-xs text-gray-400">{{ etatFiltre().length }} article(s)</span>
+    </div>
+
+    @if (chargement()) {
+      <div class="space-y-2.5">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <div class="h-[58px] animate-pulse rounded-lg border border-line bg-surface"></div>
+        }
+      </div>
+    } @else if (etatFiltre().length === 0) {
+      <div class="carte px-6 py-[60px] text-center text-gray-400">
+        <app-icon class="mx-auto mb-3 opacity-50" name="package" [size]="36" />
+        <b class="mb-1 block text-[14.5px] text-gray-600">Aucun article</b>
+        <span class="text-sm">Créez des articles et vos mouvements de stock apparaîtront ici.</span>
+      </div>
+    } @else {
+      <div class="carte overflow-hidden">
+        <!-- Mobile : cartes -->
+        <ul class="divide-y divide-line md:hidden">
+          @for (a of etatFiltre(); track a.articleId) {
+            <li class="p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <b class="block truncate text-sm font-semibold">{{ a.designation }}</b>
+                  <span class="font-mono text-xs text-gray-400">{{ a.codeArticle }}</span>
+                </div>
+                <span
+                  class="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold"
+                  [class]="a.stockActuel <= 0 ? 'bg-danger-bg text-danger' : enAlerte(a) ? 'bg-gold-100 text-gold-600' : 'bg-success-bg text-success'"
+                >
+                  {{ a.stockActuel }} en stock
+                </span>
+              </div>
+              <div class="mt-2.5 flex items-center justify-between">
+                <span class="text-xs text-gray-400">
+                  @if (a.seuilMin != null) { Seuil : {{ a.seuilMin }} } @else { Pas de seuil configuré }
+                </span>
+                <button type="button" class="btn btn-secondaire px-3 py-1.5 text-xs" (click)="ouvrirAjustement(a)">Ajuster</button>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <!-- Desktop : tableau -->
+        <div class="hidden overflow-x-auto md:block">
+          <table class="w-full min-w-[680px] border-collapse">
+            <thead>
+              <tr>
+                <th class="th">Article</th>
+                <th class="th text-center">Stock actuel</th>
+                <th class="th text-center">Seuil min.</th>
+                <th class="th text-center">État</th>
+                <th class="th w-28"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of etatFiltre(); track a.articleId) {
+                <tr class="ligne-table border-b border-surface-alt transition-colors duration-150 last:border-b-0">
+                  <td class="td">
+                    <span class="block font-semibold">{{ a.designation }}</span>
+                    <span class="font-mono text-xs text-gray-400">{{ a.codeArticle }}</span>
+                  </td>
+                  <td class="td text-center font-mono font-bold">{{ a.stockActuel }}</td>
+                  <td class="td text-center font-mono text-gray-600">{{ a.seuilMin ?? '—' }}</td>
+                  <td class="td text-center">
+                    <span
+                      class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold"
+                      [class]="a.stockActuel <= 0 ? 'bg-danger-bg text-danger' : enAlerte(a) ? 'bg-gold-100 text-gold-600' : 'bg-success-bg text-success'"
+                    >
+                      {{ a.stockActuel <= 0 ? 'Rupture' : enAlerte(a) ? 'Alerte' : 'OK' }}
+                    </span>
+                  </td>
+                  <td class="td">
+                    <div class="flex justify-end">
+                      <button type="button" class="btn btn-secondaire px-3 py-1.5 text-xs" (click)="ouvrirAjustement(a)">Ajuster</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Modal d'ajustement -->
+    <app-ajustement-stock-modal (confirme)="surAjustementConfirme($event)" />
+  }
+</div>

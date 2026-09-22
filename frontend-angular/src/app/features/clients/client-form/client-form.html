@@ -1,0 +1,79 @@
+<div class="animate-view mx-auto max-w-[640px]">
+  <div class="mb-7">
+    <a routerLink="/clients" class="mb-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 hover:text-gold-600">
+      <app-icon name="arrow-right" [size]="14" class="rotate-180" />
+      Retour aux clients
+    </a>
+    <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">{{ editId ? 'Modifier le client' : 'Nouveau client' }}</h1>
+    <p class="mt-1.5 text-sm text-gray-600">Seuls le nom et le prénom sont obligatoires ; le reste enrichit la fiche.</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="enregistrer()" class="carte p-6 max-sm:p-4">
+    <!-- Identité -->
+    <h3 class="mb-4 font-display text-lg font-[650]">Identité</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div>
+        <label class="etiquette" for="prenom">Prénom *</label>
+        <input id="prenom" type="text" formControlName="prenom" class="champ" />
+      </div>
+      <div>
+        <label class="etiquette" for="nom">Nom *</label>
+        <input id="nom" type="text" formControlName="nom" class="champ" />
+      </div>
+    </div>
+
+    <div class="my-5 border-t border-dashed border-line"></div>
+    <h3 class="mb-4 font-display text-lg font-[650]">Adresse</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div class="col-span-2 max-md:col-span-1">
+        <label class="etiquette" for="adresse1">Adresse</label>
+        <input id="adresse1" type="text" formControlName="adresse1" class="champ" placeholder="Rue, quartier…" />
+      </div>
+      <div class="col-span-2 max-md:col-span-1">
+        <label class="etiquette" for="adresse2">Complément</label>
+        <input id="adresse2" type="text" formControlName="adresse2" class="champ" placeholder="Bâtiment, étage…" />
+      </div>
+      <div>
+        <label class="etiquette" for="ville">Ville</label>
+        <input id="ville" type="text" formControlName="ville" class="champ" />
+      </div>
+      <div class="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+        <div>
+          <label class="etiquette" for="codePostal">Code postal</label>
+          <input id="codePostal" type="text" formControlName="codePostal" class="champ" />
+        </div>
+        <div>
+          <label class="etiquette" for="pays">Pays</label>
+          <input id="pays" type="text" formControlName="pays" class="champ" />
+        </div>
+      </div>
+    </div>
+
+    <div class="my-5 border-t border-dashed border-line"></div>
+    <h3 class="mb-4 font-display text-lg font-[650]">Contact</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div>
+        <label class="etiquette" for="mail">Email</label>
+        <input id="mail" type="email" formControlName="mail" class="champ" />
+        @if (form.controls.mail.invalid && form.controls.mail.touched) {
+          <p class="mt-1.5 text-xs text-danger">Adresse email invalide.</p>
+        }
+      </div>
+      <div>
+        <label class="etiquette" for="numTel">Téléphone</label>
+        <input id="numTel" type="tel" formControlName="numTel" class="champ font-mono" placeholder="+237 …" />
+      </div>
+    </div>
+
+    @if (erreur()) {
+      <div class="mt-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+    }
+
+    <div class="mt-5 flex flex-wrap justify-end gap-2.5 max-sm:grid max-sm:grid-cols-1">
+      <a routerLink="/clients" class="btn btn-secondaire">Annuler</a>
+      <button type="submit" [disabled]="form.invalid || envoiEnCours()" class="btn btn-primaire">
+        {{ envoiEnCours() ? 'Enregistrement…' : editId ? 'Enregistrer' : 'Créer le client' }}
+      </button>
+    </div>
+  </form>
+</div>

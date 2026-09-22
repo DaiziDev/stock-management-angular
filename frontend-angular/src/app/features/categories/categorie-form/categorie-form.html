@@ -1,0 +1,34 @@
+<div class="animate-view mx-auto max-w-[560px]">
+  <div class="mb-7">
+    <a routerLink="/categories" class="mb-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 hover:text-gold-600">
+      <app-icon name="arrow-right" [size]="14" class="rotate-180" />
+      Retour aux catégories
+    </a>
+    <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">{{ editId ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h1>
+    <p class="mt-1.5 text-sm text-gray-600">Le code identifie la catégorie dans le catalogue (ex. : ALM pour alimentaire).</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="enregistrer()" class="carte p-6 max-sm:p-4">
+    <div class="space-y-3.5">
+      <div>
+        <label class="etiquette" for="code">Code *</label>
+        <input id="code" type="text" formControlName="code" class="champ" placeholder="Ex. : ALM" />
+      </div>
+      <div>
+        <label class="etiquette" for="designation">Désignation *</label>
+        <input id="designation" type="text" formControlName="designation" class="champ" placeholder="Ex. : Alimentaire" />
+      </div>
+    </div>
+
+    @if (erreur()) {
+      <div class="mt-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+    }
+
+    <div class="mt-5 flex flex-wrap justify-end gap-2.5 max-sm:grid max-sm:grid-cols-1">
+      <a routerLink="/categories" class="btn btn-secondaire">Annuler</a>
+      <button type="submit" [disabled]="form.invalid || envoiEnCours()" class="btn btn-primaire">
+        {{ envoiEnCours() ? 'Enregistrement…' : editId ? 'Enregistrer' : 'Créer la catégorie' }}
+      </button>
+    </div>
+  </form>
+</div>

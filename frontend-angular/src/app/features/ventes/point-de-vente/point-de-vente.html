@@ -1,0 +1,210 @@
+<div class="animate-view">
+  <!-- En-tête -->
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Transactions</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Point de vente</h1>
+      <p class="mt-1.5 text-sm text-gray-600">Encaissez vos clients : le stock est décrémenté immédiatement à la vente.</p>
+    </div>
+  </div>
+
+  @if (erreurChargement()) {
+    <div class="carte p-14 text-center text-sm text-gray-400">{{ erreurChargement() }}</div>
+  } @else if (chargement()) {
+    <div class="grid grid-cols-3 gap-4.5 max-lg:grid-cols-1">
+      <div class="col-span-2 h-[420px] animate-pulse rounded-lg border border-line bg-surface"></div>
+      <div class="h-[420px] animate-pulse rounded-lg border border-line bg-surface"></div>
+    </div>
+  } @else {
+    <div class="grid grid-cols-3 items-start gap-4.5 max-lg:grid-cols-1">
+      <!-- ═══════════ Catalogue ═══════════ -->
+      <div class="col-span-2">
+        <!-- Recherche -->
+        <div class="relative mb-4">
+          <app-icon class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="16" />
+          <input
+            type="text"
+            placeholder="Rechercher un article (nom, code, catégorie)…"
+            [value]="recherche()"
+            (input)="recherche.set($any($event.target).value)"
+            class="champ pl-10"
+          />
+        </div>
+
+        @if (articlesFiltres().length === 0) {
+          <div class="carte px-6 py-[50px] text-center text-gray-400">
+            <app-icon class="mx-auto mb-3 opacity-50" name="package" [size]="34" />
+            <b class="mb-1 block text-[14.5px] text-gray-600">Aucun article trouvé</b>
+            <span class="text-sm">Ajustez votre recherche ou créez des articles dans le catalogue.</span>
+          </div>
+        } @else {
+          <div class="grid grid-cols-3 gap-3.5 max-lg:grid-cols-2 max-sm:grid-cols-2">
+            @for (a of articlesFiltres(); track a.id) {
+              <button
+                type="button"
+                (click)="ajouter(a)"
+                [disabled]="stockRestant(a) <= 0"
+                class="group relative flex gap-3.5 rounded-lg border border-line bg-surface p-3.5 text-left shadow-xs transition-all duration-200 ease-soft hover:-translate-y-0.5 hover:border-gold-500/50 hover:shadow-md disabled:pointer-events-none disabled:opacity-45"
+              >
+                <span class="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-alt">
+                  @if (a.photo) {
+                    <img [src]="a.photo" alt="" class="h-full w-full object-cover" loading="lazy" />
+                  } @else {
+                    <app-icon class="text-gray-300" name="package" [size]="24" />
+                  }
+                </span>
+                <span class="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <span class="flex items-start justify-between gap-2">
+                    <span class="font-mono text-2xs text-gray-400">{{ a.codeArticle }}</span>
+                    <span
+                      class="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold"
+                      [class]="stockRestant(a) <= 0 ? 'bg-danger-bg text-danger' : stockRestant(a) <= 5 ? 'bg-gold-100 text-gold-600' : 'bg-success-bg text-success'"
+                    >
+                      {{ stockRestant(a) <= 0 ? 'Épuisé' : stockRestant(a) + ' en stock' }}
+                    </span>
+                    <span class="sr-only">{{ a.designation }}</span>
+                  </span>
+                  <b class="line-clamp-2 text-[13.5px] font-semibold leading-snug">{{ a.designation }}</b>
+                  <span class="mt-auto flex items-center justify-between pt-1">
+                    <span class="font-mono text-sm font-bold text-gold-600">{{ montant(a.prixUnitaireTtc) }}</span>
+                    <span class="flex h-7 w-7 items-center justify-center rounded-md bg-surface-alt text-gray-600 transition-colors group-hover:bg-gold-500 group-hover:text-ink-950">
+                      <app-icon name="plus" [size]="14" />
+                    </span>
+                  </span>
+                </span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- ═══════════ Panier ═══════════ -->
+      <div class="sticky top-[98px] rounded-lg border border-line bg-surface shadow-xs">
+        <div class="flex items-center justify-between border-b border-line px-5 py-4">
+          <h3 class="flex items-center gap-2 font-display text-lg font-[650]">
+            <app-icon name="shopping-cart" [size]="18" class="text-gold-600" />
+            Panier
+            @if (nbArticles() > 0) {
+              <span class="rounded-full bg-gold-500 px-2 py-0.5 font-mono text-2xs font-bold text-ink-950">{{ nbArticles() }}</span>
+            }
+          </h3>
+          @if (panier().length > 0) {
+            <button type="button" class="text-xs font-semibold text-gray-400 hover:text-danger" (click)="vider()">Vider</button>
+          }
+        </div>
+
+        <!-- Client (optionnel) -->
+        <div class="border-b border-line px-5 py-4">
+          <label class="etiquette" for="client">Client (optionnel)</label>
+          <select id="client" class="champ" [ngModel]="clientId()" (ngModelChange)="clientId.set(toClientId($event))">
+            <option [ngValue]="null">Client comptoir</option>
+            @for (c of clients(); track c.id) {
+              <option [value]="c.id">{{ c.prenom }} {{ c.nom }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Lignes -->
+        @if (panier().length === 0) {
+          <div class="px-5 py-10 text-center">
+            <app-icon class="mx-auto mb-3 opacity-30" name="shopping-cart" [size]="34" />
+            <b class="mb-1 block text-sm text-gray-600">Panier vide</b>
+            <span class="text-xs text-gray-400">Cliquez un article pour l'ajouter.</span>
+          </div>
+        } @else {
+          <ul class="max-h-[300px] divide-y divide-line overflow-y-auto">
+            @for (l of panier(); track l.article.id) {
+              <li class="flex items-center gap-3 px-5 py-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-alt">
+                  @if (l.article.photo) {
+                    <img [src]="l.article.photo" alt="" class="h-full w-full object-cover" loading="lazy" />
+                  } @else {
+                    <app-icon class="text-gray-300" name="package" [size]="16" />
+                  }
+                </span>
+                <div class="min-w-0 flex-1">
+                  <b class="block truncate text-[13px] font-semibold">{{ l.article.designation }}</b>
+                  <span class="font-mono text-2xs text-gray-400">{{ montant(l.article.prixUnitaireTtc) }} / unité</span>
+                </div>
+                <div class="flex shrink-0 items-center gap-1.5">
+                  <button type="button" class="flex h-7 w-7 items-center justify-center rounded-md bg-surface-alt text-gray-600 hover:bg-surface-alt hover:text-ink-800" (click)="decrementer(l.article.id)" aria-label="Retirer un">
+                    <span class="text-sm leading-none">−</span>
+                  </button>
+                  <span class="w-7 text-center font-mono text-sm font-bold">{{ l.quantite }}</span>
+                  <button
+                    type="button"
+                    class="flex h-7 w-7 items-center justify-center rounded-md bg-surface-alt text-gray-600 hover:text-ink-800 disabled:opacity-40"
+                    [disabled]="l.quantite >= stockMax(l)"
+                    (click)="incrementer(l.article.id)"
+                    aria-label="Ajouter un"
+                  >
+                    <span class="text-sm leading-none">+</span>
+                  </button>
+                </div>
+                <span class="w-[86px] shrink-0 text-right font-mono text-[13px] font-bold">{{ sousTotal(l) }}</span>
+                <button type="button" class="shrink-0 text-gray-300 hover:text-danger" (click)="retirer(l.article.id)" aria-label="Retirer la ligne">
+                  <app-icon name="x" [size]="14" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (erreurEncaissement()) {
+          <div class="mx-5 mb-3 rounded-sm border border-danger/30 bg-danger-bg px-3 py-2 text-xs text-danger">{{ erreurEncaissement() }}</div>
+        }
+
+        <!-- Total + encaissement -->
+        <div class="border-t border-line px-5 py-4">
+          <div class="mb-3.5 flex items-center justify-between">
+            <span class="text-sm font-semibold text-gray-600">Total TTC</span>
+            <span class="font-mono text-xl font-bold tracking-[-0.02em]">{{ montant(total()) }}</span>
+          </div>
+          <button
+            type="button"
+            class="btn btn-or w-full"
+            [disabled]="panier().length === 0 || encaissementEnCours()"
+            (click)="encaisser()"
+          >
+            <app-icon name="check" [size]="16" />
+            {{ encaissementEnCours() ? 'Encaissement…' : 'Encaisser la vente' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ Ticket de confirmation ═══════════ -->
+    @if (venteEnregistree() && venteService.derniereVente(); as v) {
+      <div class="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/45 p-4 backdrop-blur-[2px]" (click)="venteEnregistree.set(false)">
+        <div class="w-full max-w-sm rounded-lg bg-surface p-6 shadow-lg" (click)="$event.stopPropagation()">
+          <div class="mb-4 flex items-center gap-3">
+            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-success-bg text-success">
+              <app-icon name="check-circle-2" [size]="20" />
+            </span>
+            <div>
+              <b class="block font-display text-lg font-[650]">Vente enregistrée</b>
+              <span class="font-mono text-xs text-gray-400">{{ v.code }}</span>
+            </div>
+          </div>
+          <ul class="mb-4 max-h-[240px] divide-y divide-line overflow-y-auto">
+            @for (l of v.lignes; track l.id) {
+              <li class="flex items-center justify-between gap-3 py-2.5">
+                <span class="min-w-0 flex-1 truncate text-[13px]">
+                  <b class="font-mono">{{ l.quantite }}×</b> {{ l.articleDesignation }}
+                </span>
+                <span class="shrink-0 font-mono text-[13px] font-semibold">{{ montant(l.sousTotal) }}</span>
+              </li>
+            }
+          </ul>
+          <div class="mb-4 flex items-center justify-between border-t border-dashed border-line pt-3.5">
+            <span class="text-sm font-semibold text-gray-600">Total · {{ v.clientNom }}</span>
+            <span class="font-mono text-lg font-bold text-gold-600">{{ montant(v.total) }}</span>
+          </div>
+          <button type="button" class="btn btn-primaire w-full" (click)="venteEnregistree.set(false)">
+            Nouvelle vente
+          </button>
+        </div>
+      </div>
+    }
+  }
+</div>

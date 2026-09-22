@@ -1,0 +1,143 @@
+<div class="animate-view">
+  <!-- En-tête -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Administration</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Utilisateurs & rôles</h1>
+      <p class="mt-1.5 text-sm text-gray-600">Les comptes de votre entreprise et leurs droits d'accès.</p>
+    </div>
+    <a routerLink="nouveau" class="btn btn-or">
+      <app-icon name="plus" [size]="16" />
+      Nouvel utilisateur
+    </a>
+  </div>
+
+  @if (erreur()) {
+    <div class="mb-4.5 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+  }
+
+  <!-- Recherche -->
+  <div class="mb-4 flex flex-wrap items-center gap-3">
+    <div class="relative min-w-[200px] max-w-[280px] flex-1">
+      <app-icon class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="15" />
+      <input
+        type="text"
+        placeholder="Rechercher un utilisateur..."
+        [value]="recherche()"
+        (input)="recherche.set($any($event.target).value)"
+        class="w-full rounded-sm border-[1.5px] border-line bg-surface py-2.5 pl-9 pr-3 text-[13.4px] focus:border-ink-700 focus:outline-none"
+      />
+    </div>
+    <span class="text-xs text-gray-400">{{ utilisateursFiltres().length }} compte(s)</span>
+  </div>
+
+  @if (chargement()) {
+    <div class="space-y-2.5">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="h-[58px] animate-pulse rounded-lg border border-line bg-surface"></div>
+      }
+    </div>
+  } @else if (utilisateursFiltres().length === 0) {
+    <div class="carte px-6 py-[60px] text-center text-gray-400">
+      <app-icon class="mx-auto mb-3 opacity-50" name="users" [size]="36" />
+      <b class="mb-1 block text-[14.5px] text-gray-600">Aucun utilisateur</b>
+      <span class="text-sm">Créez les comptes de votre équipe (vendeurs, gestionnaires…).</span>
+    </div>
+  } @else {
+    <div class="carte overflow-hidden">
+      <!-- Mobile : cartes -->
+      <ul class="divide-y divide-line md:hidden">
+        @for (u of utilisateursFiltres(); track u.id) {
+          <li class="flex items-center gap-3 p-4">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" [class]="u.role === 'ADMIN' ? 'bg-gold-600' : 'bg-ink-800'">
+              {{ u.nom.charAt(0) }}
+            </span>
+            <div class="min-w-0 flex-1">
+              <b class="block truncate text-sm font-semibold">{{ u.prenom }} {{ u.nom }}</b>
+              <span class="block truncate text-xs text-gray-600">{{ u.login }}</span>
+            </div>
+            <span class="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold" [class]="badgeRole(u.role)">{{ roleLabels[u.role] }}</span>
+            <a [routerLink]="[u.id, 'editer']" class="rounded-md p-2 text-gray-400 hover:bg-surface-alt hover:text-ink-800" title="Modifier">
+              <app-icon name="pencil" [size]="15" />
+            </a>
+            @if (!estMoi(u)) {
+              <button type="button" class="rounded-md p-2 text-gray-400 hover:bg-danger-bg hover:text-danger" (click)="supprimer(u)" title="Supprimer">
+                <app-icon name="trash" [size]="15" />
+              </button>
+            }
+          </li>
+        }
+      </ul>
+      <!-- Desktop : tableau -->
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[720px] border-collapse">
+          <thead>
+            <tr>
+              <th class="th">Utilisateur</th>
+              <th class="th">Login</th>
+              <th class="th">Email</th>
+              <th class="th">Téléphone</th>
+              <th class="th">Rôle</th>
+              <th class="th w-24"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of utilisateursFiltres(); track u.id) {
+              <tr class="ligne-table border-b border-surface-alt transition-colors duration-150 last:border-b-0">
+                <td class="td">
+                  <div class="flex items-center gap-2.5">
+                    <span class="flex h-[27px] w-[27px] shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" [class]="u.role === 'ADMIN' ? 'bg-gold-600' : 'bg-ink-800'">
+                      {{ u.nom.charAt(0) }}
+                    </span>
+                    <b class="font-semibold">
+                      {{ u.prenom }} {{ u.nom }}
+                      @if (estMoi(u)) {
+                        <span class="ml-1 text-2xs font-normal text-gray-400">(vous)</span>
+                      }
+                    </b>
+                  </div>
+                </td>
+                <td class="td font-mono text-gray-600">{{ u.login }}</td>
+                <td class="td text-gray-600">{{ u.mail || '—' }}</td>
+                <td class="td font-mono text-gray-600">{{ u.numTel || '—' }}</td>
+                <td class="td">
+                  <span class="inline-block rounded-full px-2.5 py-1 text-2xs font-bold" [class]="badgeRole(u.role)" [title]="u.role === 'ADMIN' && nbAdmins() === 1 ? 'Dernier administrateur' : ''">
+                    {{ roleLabels[u.role] }}
+                  </span>
+                </td>
+                <td class="td">
+                  <div class="flex justify-end gap-1.5">
+                    <a [routerLink]="[u.id, 'editer']" class="flex h-[31px] w-[31px] items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-surface-alt hover:text-ink-800" title="Modifier">
+                      <app-icon name="pencil" [size]="15" />
+                    </a>
+                    @if (!estMoi(u)) {
+                      <button type="button" class="flex h-[31px] w-[31px] items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-danger-bg hover:text-danger" (click)="supprimer(u)" title="Supprimer">
+                        <app-icon name="trash" [size]="15" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Rappel des rôles -->
+    <div class="mt-4.5 grid grid-cols-3 gap-4.5 max-md:grid-cols-1">
+      <div class="carte p-4">
+        <b class="text-sm font-semibold text-gold-600">Administrateur</b>
+        <p class="mt-1 text-xs text-gray-600">Gère les comptes, le catalogue, les commandes et les rapports.</p>
+      </div>
+      <div class="carte p-4">
+        <b class="text-sm font-semibold text-info">Gestionnaire</b>
+        <p class="mt-1 text-xs text-gray-600">Gère le catalogue, les commandes et suit le stock.</p>
+      </div>
+      <div class="carte p-4">
+        <b class="text-sm font-semibold text-success">Vendeur</b>
+        <p class="mt-1 text-xs text-gray-600">Enregistre les ventes au point de vente et consulte les articles.</p>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,124 @@
+<div class="animate-view">
+  <!-- En-tête -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Catalogue</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Articles</h1>
+      <p class="mt-1.5 text-sm text-gray-600">Le catalogue produits de votre entreprise : prix, TVA et stock.</p>
+    </div>
+    <a routerLink="nouveau" class="btn btn-or">
+      <app-icon name="plus" [size]="16" />
+      Nouvel article
+    </a>
+  </div>
+
+  @if (erreur()) {
+    <div class="mb-4.5 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+  }
+
+  <!-- Recherche -->
+  <div class="mb-4 flex flex-wrap items-center gap-3">
+    <div class="relative min-w-[200px] max-w-[280px] flex-1">
+      <app-icon class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="15" />
+      <input
+        type="text"
+        placeholder="Rechercher un article..."
+        [value]="recherche()"
+        (input)="recherche.set($any($event.target).value)"
+        class="w-full rounded-sm border-[1.5px] border-line bg-surface py-2.5 pl-9 pr-3 text-[13.4px] focus:border-ink-700 focus:outline-none"
+      />
+    </div>
+    <span class="text-xs text-gray-400">{{ articlesFiltrees().length }} article(s)</span>
+  </div>
+
+  @if (chargement()) {
+    <div class="space-y-2.5">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="h-[58px] animate-pulse rounded-lg border border-line bg-surface"></div>
+      }
+    </div>
+  } @else if (articlesFiltrees().length === 0) {
+    <div class="carte px-6 py-[60px] text-center text-gray-400">
+      <app-icon class="mx-auto mb-3 opacity-50" name="package" [size]="36" />
+      <b class="mb-1 block text-[14.5px] text-gray-600">Aucun article</b>
+      <span class="text-sm">Ajoutez votre premier article pour commencer à vendre.</span>
+    </div>
+  } @else {
+    <div class="carte overflow-hidden">
+      <!-- Mobile : cartes -->
+      <ul class="divide-y divide-line md:hidden">
+        @for (a of articlesFiltrees(); track a.id) {
+          <li class="flex items-center gap-3 p-4">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-info-bg">
+              @if (a.photo) {
+                <img [src]="a.photo" alt="" class="h-full w-full object-cover" loading="lazy" />
+              } @else {
+                <app-icon class="text-info" name="package" [size]="16" />
+              }
+            </span>
+            <div class="min-w-0 flex-1">
+              <b class="block truncate text-sm font-semibold">{{ a.designation }}</b>
+              <span class="block truncate text-xs text-gray-600">{{ a.categorie.designation }} · <span class="font-mono">{{ a.codeArticle }}</span></span>
+            </div>
+            <span class="shrink-0 font-mono text-sm font-bold text-gray-900">{{ a.prixUnitaireTtc | number : '1.0-0' }} F</span>
+            <a [routerLink]="[a.id, 'editer']" class="rounded-md p-2 text-gray-400 hover:bg-surface-alt hover:text-ink-800" title="Modifier">
+              <app-icon name="pencil" [size]="15" />
+            </a>
+            <button type="button" class="rounded-md p-2 text-gray-400 hover:bg-danger-bg hover:text-danger" (click)="supprimer(a)" title="Supprimer">
+              <app-icon name="trash" [size]="15" />
+            </button>
+          </li>
+        }
+      </ul>
+      <!-- Desktop : tableau -->
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[680px] border-collapse">
+          <thead>
+            <tr>
+              <th class="th">Code</th>
+              <th class="th">Désignation</th>
+              <th class="th">Catégorie</th>
+              <th class="th text-right">Prix HT</th>
+              <th class="th text-right">Prix TTC</th>
+              <th class="th w-24"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of articlesFiltrees(); track a.id) {
+              <tr class="ligne-table border-b border-surface-alt transition-colors duration-150 last:border-b-0">
+                <td class="td font-mono font-semibold text-gray-700">{{ a.codeArticle }}</td>
+                <td class="td">
+                  <span class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-alt">
+                      @if (a.photo) {
+                        <img [src]="a.photo" alt="" class="h-full w-full object-cover" loading="lazy" />
+                      } @else {
+                        <app-icon class="text-gray-300" name="package" [size]="16" />
+                      }
+                    </span>
+                    <span class="font-semibold">{{ a.designation }}</span>
+                  </span>
+                </td>
+                <td class="td">
+                  <span class="inline-flex rounded-full bg-surface-alt px-2.5 py-1 text-xs font-semibold text-gray-600">{{ a.categorie.designation }}</span>
+                </td>
+                <td class="td text-right font-mono text-gray-600">{{ a.prixUnitaireHt | number : '1.0-0' }}</td>
+                <td class="td text-right font-mono font-bold">{{ a.prixUnitaireTtc | number : '1.0-0' }}</td>
+                <td class="td">
+                  <div class="flex justify-end gap-1.5">
+                    <a [routerLink]="[a.id, 'editer']" class="flex h-[31px] w-[31px] items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-surface-alt hover:text-ink-800" title="Modifier">
+                      <app-icon name="pencil" [size]="15" />
+                    </a>
+                    <button type="button" class="flex h-[31px] w-[31px] items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-danger-bg hover:text-danger" (click)="supprimer(a)" title="Supprimer">
+                      <app-icon name="x" [size]="15" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

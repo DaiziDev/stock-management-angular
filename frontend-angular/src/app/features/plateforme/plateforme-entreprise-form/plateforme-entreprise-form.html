@@ -1,0 +1,140 @@
+<div class="animate-view mx-auto max-w-[720px]">
+  <div class="mb-7">
+    <a routerLink="/plateforme/entreprises" class="mb-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 hover:text-gold-600">
+      <app-icon name="arrow-right" [size]="14" class="rotate-180" />
+      Retour aux entreprises
+    </a>
+    <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Plateforme</span>
+    <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">
+      {{ entreprise()?.nom ?? 'Entreprise' }}
+    </h1>
+    <p class="mt-1.5 text-sm text-gray-600">
+      Coordonnées de l'entreprise cliente. Le nom est l'identifiant de cloisonnement : il n'est pas modifiable ici.
+    </p>
+  </div>
+
+  @if (chargement()) {
+    <div class="space-y-4.5">
+      <div class="h-[92px] animate-pulse rounded-lg border border-line bg-surface"></div>
+      <div class="h-[300px] animate-pulse rounded-lg border border-line bg-surface"></div>
+    </div>
+  } @else if (entreprise(); as e) {
+    <!-- ── Carte d'identité (non modifiable) ── -->
+    <div class="mb-4.5 flex items-center gap-3.5 rounded-lg border border-line bg-surface p-4.5 shadow-xs">
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink-800 text-base font-bold text-white">{{ e.nom.charAt(0) }}</span>
+      <div class="min-w-0 flex-1">
+        <b class="block truncate text-[15px] font-semibold">{{ e.nom }}</b>
+        <span class="block truncate text-xs text-gray-600">
+          {{ localisation() || 'Adresse non renseignée' }} · {{ e.nbUtilisateurs }} compte(s)
+        </span>
+      </div>
+      <span class="shrink-0 rounded-full bg-surface-alt px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.08em] text-gray-400">Non modifiable</span>
+    </div>
+
+    <!-- ── Formulaire ── -->
+    <form (submit)="$event.preventDefault(); enregistrer()" class="rounded-lg border border-line bg-surface p-6 shadow-sm max-sm:p-4">
+      <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+        <div class="col-span-2 max-md:col-span-1">
+          <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600" for="adresse1">Adresse</label>
+          <input
+            type="text"
+            id="adresse1"
+            name="adresse1"
+            [(ngModel)]="adresse1"
+            placeholder="Rue, quartier…"
+            class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none"
+          />
+        </div>
+        <div class="col-span-2 max-md:col-span-1">
+          <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600" for="adresse2">Complément d'adresse</label>
+          <input
+            type="text"
+            id="adresse2"
+            name="adresse2"
+            [(ngModel)]="adresse2"
+            placeholder="Bâtiment, étage…"
+            class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600" for="ville">Ville</label>
+          <input
+            type="text"
+            id="ville"
+            name="ville"
+            [(ngModel)]="ville"
+            placeholder="Ex. : Douala"
+            class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600" for="codePostal">Code postal</label>
+            <input
+              type="text"
+              id="codePostal"
+              name="codePostal"
+              [(ngModel)]="codePostal"
+              class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600" for="pays">Pays</label>
+            <input
+              type="text"
+              id="pays"
+              name="pays"
+              [(ngModel)]="pays"
+              placeholder="Ex. : Cameroun"
+              class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600" for="mail">Email</label>
+          <input
+            type="email"
+            id="mail"
+            name="mail"
+            [(ngModel)]="mail"
+            class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600" for="numTel">Téléphone</label>
+          <input
+            type="tel"
+            id="numTel"
+            name="numTel"
+            [(ngModel)]="numTel"
+            class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 font-mono text-base focus:border-ink-700 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      @if (erreur()) {
+        <div class="mt-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+      }
+
+      <div class="mt-5 flex flex-wrap justify-end gap-2.5 max-sm:grid max-sm:grid-cols-1">
+        <a
+          routerLink="/plateforme/entreprises"
+          class="inline-flex items-center justify-center gap-2 rounded-sm border-[1.5px] border-line bg-transparent px-5 py-3 text-sm font-semibold text-gray-600 transition-all duration-200 ease-soft hover:bg-surface-alt hover:text-ink-800"
+        >
+          Annuler
+        </a>
+        <button
+          type="submit"
+          [disabled]="envoiEnCours()"
+          class="inline-flex items-center justify-center gap-2 rounded-sm bg-ink-850 px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all duration-200 ease-soft hover:-translate-y-px hover:bg-ink-800 hover:shadow-md disabled:pointer-events-none disabled:opacity-60"
+        >
+          {{ envoiEnCours() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+      </div>
+    </form>
+  } @else {
+    <div class="rounded-lg border border-line bg-surface p-14 text-center text-sm text-gray-400">
+      Entreprise introuvable.
+    </div>
+  }
+</div>

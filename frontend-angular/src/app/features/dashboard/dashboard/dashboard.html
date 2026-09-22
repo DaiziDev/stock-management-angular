@@ -1,0 +1,237 @@
+<div class="animate-view">
+  <!-- ═══════════ En-tête ═══════════ -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Vue d'ensemble</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Tableau de bord</h1>
+      <p class="mt-1.5 text-sm text-gray-600">L'activité de votre entreprise, en temps réel.</p>
+    </div>
+    <a
+      routerLink="/ventes"
+      class="inline-flex items-center gap-2 rounded-sm bg-ink-850 px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all duration-200 ease-soft hover:-translate-y-px hover:bg-ink-800 hover:shadow-md"
+    >
+      <app-icon name="shopping-cart" [size]="16" />
+      Point de vente
+    </a>
+  </div>
+
+  @if (chargement()) {
+    <!-- ═══════════ Skeletons ═══════════ -->
+    <div class="space-y-4.5">
+      <div class="grid grid-cols-4 gap-4.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="h-[118px] animate-pulse rounded-lg border border-line bg-surface"></div>
+        }
+      </div>
+      <div class="grid grid-cols-5 gap-4.5">
+        <div class="col-span-3 h-[280px] animate-pulse rounded-lg border border-line bg-surface"></div>
+        <div class="col-span-2 h-[280px] animate-pulse rounded-lg border border-line bg-surface"></div>
+      </div>
+    </div>
+  } @else if (erreur()) {
+    <div class="rounded-lg border border-line bg-surface p-14 text-center text-sm text-gray-400">
+      Impossible de charger le tableau de bord. Vérifiez que le serveur est démarré.
+    </div>
+  } @else {
+    <!-- ═══════════ KPI cards ═══════════ -->
+    <div class="mb-4.5 grid grid-cols-4 gap-4.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-gold-100 text-gold-600">
+            <app-icon name="package" [size]="18" />
+          </div>
+        </div>
+        <div class="font-mono text-[26px] font-semibold tracking-[-0.02em]">{{ montant(kpis()?.valeurStock) }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Valorisation du stock (HT)</div>
+      </div>
+
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-success-bg text-success">
+            <app-icon name="trending-up" [size]="18" />
+          </div>
+        </div>
+        <div class="font-mono text-[26px] font-semibold tracking-[-0.02em]">{{ montant(kpis()?.chiffreAffairesDuMois) }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Chiffre d'affaires du mois ({{ kpis()?.nbVentesDuMois | number }} ventes)</div>
+      </div>
+
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-info-bg text-info">
+            <app-icon name="clipboard-list" [size]="18" />
+          </div>
+        </div>
+        <div class="font-mono text-[26px] font-semibold tracking-[-0.02em]">{{ kpis()?.nbCommandesClientEnCours | number }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Commandes clients en cours</div>
+      </div>
+
+      <div class="group relative overflow-hidden rounded-lg border border-line bg-surface p-5.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-danger-bg text-danger">
+            <app-icon name="clipboard-check" [size]="18" />
+          </div>
+        </div>
+        <div class="font-mono text-[26px] font-semibold tracking-[-0.02em]">{{ kpis()?.nbCommandesFournisseurEnAttente | number }}</div>
+        <div class="mt-1 text-[12.5px] text-gray-600">Commandes fournisseurs en attente</div>
+      </div>
+    </div>
+
+    <!-- ═══════════ Graphique + Alertes ═══════════ -->
+    <div class="mb-4.5 grid grid-cols-5 gap-4.5 max-lg:grid-cols-1">
+      <!-- Graphique CA 7 jours (barres natives, sans librairie) -->
+      <div class="col-span-3 rounded-lg border border-line bg-surface p-5.5">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-display text-lg font-[650]">Ventes des 7 derniers jours</h3>
+            <p class="mt-0.5 text-xs text-gray-400">Total : {{ montant(totalSemaine()) }}</p>
+          </div>
+          <span class="rounded-full bg-surface-alt px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.08em] text-gray-400">7 jours</span>
+        </div>
+
+        <div class="flex h-[190px] items-end gap-2.5 max-sm:gap-1.5">
+          @for (v of serieCA(); track $index) {
+            <div class="group flex h-full flex-1 flex-col items-center justify-end gap-2">
+              <span class="text-[10px] font-semibold text-gray-400 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                {{ montant(v) }}
+              </span>
+              <div
+                class="w-full max-w-[38px] rounded-t-[5px] bg-[linear-gradient(180deg,var(--color-gold-400),var(--color-gold-600))] transition-all duration-300 ease-soft group-hover:brightness-110"
+                [style.height.%]="hauteurBarre($index)"
+              ></div>
+            </div>
+          }
+        </div>
+        <div class="mt-2 flex gap-2.5 max-sm:gap-1.5">
+          @for (j of joursSemaine(); track $index) {
+            <div class="flex-1 text-center font-mono text-2xs uppercase text-gray-400">{{ j }}</div>
+          }
+        </div>
+      </div>
+
+      <!-- Alertes de stock -->
+      <div class="col-span-2 flex flex-col rounded-lg border border-line bg-surface p-5.5">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="font-display text-lg font-[650]">Alertes de stock</h3>
+          @if (alertes().length > 0) {
+            <span class="rounded-full bg-danger-bg px-2.5 py-1 text-2xs font-bold text-danger">{{ alertes().length }}</span>
+          }
+        </div>
+
+        @if (alertes().length === 0) {
+          <div class="flex flex-1 flex-col items-center justify-center py-8 text-center">
+            <app-icon class="mb-3 text-success opacity-70" name="check-circle-2" [size]="34" />
+            <b class="text-sm text-gray-600">Aucune alerte</b>
+            <span class="mt-1 text-xs text-gray-400">Tous les articles sont au-dessus de leur seuil.</span>
+          </div>
+        } @else {
+          <ul class="max-h-[210px] space-y-2.5 overflow-y-auto pr-1">
+            @for (a of alertes().slice(0, 8); track a.id) {
+              <li class="flex items-center gap-3 rounded-md bg-danger-bg/60 px-3.5 py-2.5">
+                <div class="min-w-0 flex-1">
+                  <b class="block truncate text-[13px] font-semibold text-gray-900">{{ a.designation }}</b>
+                  <span class="font-mono text-2xs text-gray-600">{{ a.codeArticle }}</span>
+                </div>
+                <span class="shrink-0 font-mono text-sm font-bold" [class]="a.stockActuel === 0 ? 'text-danger' : 'text-gold-600'">
+                  {{ a.stockActuel }}
+                  <span class="text-2xs font-normal text-gray-400">/ {{ a.seuilMin ?? '—' }}</span>
+                </span>
+              </li>
+            }
+          </ul>
+          @if (alertes().length > 8) {
+            <p class="mt-2.5 text-center text-2xs text-gray-400">+ {{ alertes().length - 8 }} autres articles en alerte</p>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- ═══════════ Graphiques Chart.js (30 jours) ═══════════ -->
+    <div class="mb-4.5 grid grid-cols-5 gap-4.5 max-lg:grid-cols-1">
+      <!-- Évolution des entrées / sorties de stock (aire, 30 jours) -->
+      <div class="col-span-3 flex flex-col rounded-lg border border-line bg-surface p-5.5">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-display text-lg font-[650]">Évolution des entrées / sorties</h3>
+            <p class="mt-0.5 text-xs text-gray-400">Mouvements de stock sur 30 jours</p>
+          </div>
+          <span class="rounded-full bg-surface-alt px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.08em] text-gray-400">30 jours</span>
+        </div>
+        @if (aEvolution()) {
+          <app-chart [config]="configEvolutionStock()" [height]="230" class="block" />
+        } @else {
+          <div class="flex flex-1 items-center justify-center py-10 text-center">
+            <div>
+              <app-icon class="mx-auto mb-3 opacity-40" name="arrow-left-right" [size]="34" />
+              <b class="block text-sm text-gray-600">Aucun mouvement de stock</b>
+              <span class="mt-1 text-xs text-gray-400">Réceptionnez une commande ou enregistrez une vente.</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Top 5 articles les plus vendus (barres horizontales) -->
+      <div class="col-span-2 flex flex-col rounded-lg border border-line bg-surface p-5.5">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-display text-lg font-[650]">Top articles vendus</h3>
+            <p class="mt-0.5 text-xs text-gray-400">5 meilleures ventes sur 30 jours</p>
+          </div>
+          <span class="rounded-full bg-surface-alt px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.08em] text-gray-400">Top 5</span>
+        </div>
+        @if (aTopArticles()) {
+          <app-chart [config]="configTopArticles()" [height]="230" class="block" />
+        } @else {
+          <div class="flex flex-1 items-center justify-center py-10 text-center">
+            <div>
+              <app-icon class="mx-auto mb-3 opacity-40" name="bar-chart-3" [size]="34" />
+              <b class="block text-sm text-gray-600">Aucune vente sur la période</b>
+              <span class="mt-1 text-xs text-gray-400">Le classement apparaît dès la première vente.</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ═══════════ Dernières ventes ═══════════ -->
+    <div class="rounded-lg border border-line bg-surface p-5.5">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="font-display text-lg font-[650]">Dernières ventes</h3>
+        <a routerLink="/ventes" class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 transition-colors hover:text-gold-600">
+          Tout voir
+          <app-icon name="arrow-right" [size]="14" />
+        </a>
+      </div>
+
+      @if (ventes().length === 0) {
+        <div class="py-8 text-center">
+          <app-icon class="mx-auto mb-3 opacity-40" name="shopping-cart" [size]="34" />
+          <b class="mb-1 block text-sm text-gray-600">Aucune vente enregistrée</b>
+          <span class="text-xs text-gray-400">Les ventes de votre boutique apparaîtront ici.</span>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[560px] border-collapse">
+            <thead>
+              <tr>
+                <th class="border-b border-line px-3 py-2.5 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Code</th>
+                <th class="border-b border-line px-3 py-2.5 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Client</th>
+                <th class="border-b border-line px-3 py-2.5 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Date</th>
+                <th class="border-b border-line px-3 py-2.5 text-right text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of ventes().slice(0, 6); track v.id) {
+                <tr class="transition-colors duration-150 hover:bg-surface-alt">
+                  <td class="px-3 py-3 font-mono text-[12.8px] font-semibold text-gray-700">{{ v.code }}</td>
+                  <td class="px-3 py-3 text-[13.6px]">{{ v.clientNom || 'Comptoir' }}</td>
+                  <td class="px-3 py-3 font-mono text-[12.8px] text-gray-600">{{ heure(v.dateVente) }}</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13.6px] font-bold">{{ montant(v.total) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

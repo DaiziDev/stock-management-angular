@@ -1,0 +1,183 @@
+<div class="animate-view mx-auto max-w-[1100px]">
+  <!-- En-tête -->
+  <div class="mb-7">
+    <a routerLink="/commandes-fournisseur" class="mb-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 hover:text-gold-600">
+      <app-icon name="arrow-right" [size]="14" class="rotate-180" />
+      Retour aux commandes
+    </a>
+    <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Nouvelle commande fournisseur</h1>
+    <p class="mt-1.5 text-sm text-gray-600">
+      Le stock n'est pas touché à la création : il sera incrémenté à la réception de la commande.
+    </p>
+  </div>
+
+  @if (erreurChargement()) {
+    <div class="carte p-14 text-center text-sm text-gray-400">{{ erreurChargement() }}</div>
+  } @else if (chargement()) {
+    <div class="grid grid-cols-3 gap-4.5 max-lg:grid-cols-1">
+      <div class="col-span-2 h-[420px] animate-pulse rounded-lg border border-line bg-surface"></div>
+      <div class="h-[420px] animate-pulse rounded-lg border border-line bg-surface"></div>
+    </div>
+  } @else {
+    <div class="grid grid-cols-3 items-start gap-4.5 max-lg:grid-cols-1">
+      <!-- ═══════════ Colonne principale ═══════════ -->
+      <div class="col-span-2 space-y-4.5">
+        <!-- Étape 1 : fournisseur -->
+        <div class="carte p-6 max-sm:p-4">
+          <h3 class="mb-1 flex items-center gap-2.5 font-display text-lg font-[650]">
+            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gold-500 font-mono text-xs font-bold text-ink-950">1</span>
+            Le fournisseur
+          </h3>
+          <p class="mb-4 text-xs text-gray-400">Un bon de commande lui sera envoyé par email (RG-07).</p>
+          <label class="etiquette" for="fournisseur">Fournisseur *</label>
+          <select id="fournisseur" class="champ" [ngModel]="fournisseurId()" (ngModelChange)="fournisseurId.set(toFournisseurId($event))">
+            <option [ngValue]="null" disabled>-- choisir un fournisseur --</option>
+            @for (f of fournisseurs(); track f.id) {
+              <option [value]="f.id">{{ f.nom }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Étape 2 : articles -->
+        <div class="carte p-6 max-sm:p-4">
+          <h3 class="mb-1 flex items-center gap-2.5 font-display text-lg font-[650]">
+            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gold-500 font-mono text-xs font-bold text-ink-950">2</span>
+            Les articles à commander
+          </h3>
+          <p class="mb-4 text-xs text-gray-400">Recherchez puis cliquez pour ajouter ; ajustez les quantités ensuite.</p>
+
+          <div class="relative mb-4">
+            <app-icon class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="16" />
+            <input
+              type="text"
+              placeholder="Rechercher un article (nom, code, catégorie)…"
+              [value]="rechercheArticle()"
+              (input)="rechercheArticle.set($any($event.target).value)"
+              class="champ pl-10"
+            />
+          </div>
+
+          @if (articlesFiltres().length === 0) {
+            <div class="rounded-md border border-dashed border-line py-10 text-center text-sm text-gray-400">
+              Aucun article trouvé.
+            </div>
+          } @else {
+            <div class="grid max-h-[340px] grid-cols-2 gap-2.5 overflow-y-auto pr-1 max-md:grid-cols-1">
+              @for (a of articlesFiltres(); track a.id) {
+                <button
+                  type="button"
+                  (click)="ajouterArticle(a)"
+                  [disabled]="lignes().some((l) => l.article.id === a.id)"
+                  class="group flex items-center gap-3 rounded-md border border-line bg-surface p-2.5 text-left transition-all duration-150 hover:border-gold-500/50 hover:bg-surface-alt disabled:opacity-40"
+                >
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-alt">
+                    @if (a.photo) {
+                      <img [src]="a.photo" alt="" class="h-full w-full object-cover" loading="lazy" />
+                    } @else {
+                      <app-icon class="text-gray-300" name="package" [size]="16" />
+                    }
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <b class="block truncate text-[13px] font-semibold">{{ a.designation }}</b>
+                    <span class="block font-mono text-2xs text-gray-400">
+                      {{ a.codeArticle }} · stock : {{ a.stockActuel ?? '—' }}
+                    </span>
+                  </span>
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-surface-alt text-gray-600 transition-colors group-hover:bg-gold-500 group-hover:text-ink-950">
+                    <app-icon name="plus" [size]="13" />
+                  </span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Étape 3 : récap -->
+        <div class="carte p-6 max-sm:p-4">
+          <h3 class="mb-1 flex items-center gap-2.5 font-display text-lg font-[650]">
+            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gold-500 font-mono text-xs font-bold text-ink-950">3</span>
+            Récapitulatif (HT)
+          </h3>
+          <p class="mb-4 text-xs text-gray-400">{{ nbUnites() }} unité(s) · {{ lignes().length }} article(s)</p>
+
+          @if (lignes().length === 0) {
+            <div class="rounded-md border border-dashed border-line py-10 text-center text-sm text-gray-400">
+              Aucun article ajouté. Cliquez un article ci-dessus pour commencer.
+            </div>
+          } @else {
+            <ul class="divide-y divide-line">
+              @for (l of lignes(); track l.article.id) {
+                <li class="flex flex-wrap items-center gap-3 py-3">
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-alt">
+                    @if (l.article.photo) {
+                      <img [src]="l.article.photo" alt="" class="h-full w-full object-cover" loading="lazy" />
+                    } @else {
+                      <app-icon class="text-gray-300" name="package" [size]="16" />
+                    }
+                  </span>
+                  <div class="min-w-[140px] flex-1">
+                    <b class="block truncate text-[13.5px] font-semibold">{{ l.article.designation }}</b>
+                    <span class="font-mono text-2xs text-gray-400">{{ montant(l.article.prixUnitaireHt) }} / u. (HT)</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" class="flex h-7 w-7 items-center justify-center rounded-md bg-surface-alt text-gray-600 hover:text-ink-800" (click)="decrementer(l.article.id)" aria-label="Diminuer">−</button>
+                    <input
+                      type="number"
+                      min="1"
+                      [value]="l.quantite"
+                      (input)="changerQuantite(l.article.id, $any($event.target).value)"
+                      class="w-14 rounded-md border-[1.5px] border-line bg-surface py-1.5 text-center font-mono text-sm focus:border-ink-700 focus:outline-none"
+                      aria-label="Quantité"
+                    />
+                    <button type="button" class="flex h-7 w-7 items-center justify-center rounded-md bg-surface-alt text-gray-600 hover:text-ink-800" (click)="incrementer(l.article.id)" aria-label="Augmenter">+</button>
+                  </div>
+                  <span class="w-[110px] shrink-0 text-right font-mono text-[13px] font-bold">{{ sousTotal(l) }}</span>
+                  <button type="button" class="shrink-0 text-gray-300 hover:text-danger" (click)="retirer(l.article.id)" aria-label="Retirer">
+                    <app-icon name="x" [size]="14" />
+                  </button>
+                </li>
+              }
+            </ul>
+
+            @if (erreur()) {
+              <div class="mt-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+            }
+
+            <div class="mt-5 flex flex-wrap justify-end gap-2.5 max-sm:grid max-sm:grid-cols-1">
+              <a routerLink="/commandes-fournisseur" class="btn btn-secondaire">Annuler</a>
+              <button type="button" class="btn btn-or" [disabled]="!fournisseurId() || lignes().length === 0 || envoiEnCours()" (click)="enregistrer()">
+                <app-icon name="check" [size]="16" />
+                {{ envoiEnCours() ? 'Création…' : 'Créer la commande' }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ═══════════ Colonne latérale : aide ═══════════ -->
+      <div class="sticky top-[98px] space-y-4.5">
+        <div class="carte p-5">
+          <h4 class="mb-3 font-display text-base font-[650]">Comment ça marche</h4>
+          <ol class="space-y-3 text-[13px] leading-relaxed text-gray-600">
+            <li class="flex gap-2.5">
+              <span class="font-mono text-xs font-bold text-gold-600">1.</span>
+              Choisissez le fournisseur — un bon de commande lui est envoyé par email.
+            </li>
+            <li class="flex gap-2.5">
+              <span class="font-mono text-xs font-bold text-gold-600">2.</span>
+              Ajoutez les articles à réapprovisionner et leurs quantités.
+            </li>
+            <li class="flex gap-2.5">
+              <span class="font-mono text-xs font-bold text-gold-600">3.</span>
+              Créez la commande : elle démarre "En attente". Réceptionnez-la depuis la liste pour entrer le stock.
+            </li>
+          </ol>
+        </div>
+        <div class="rounded-lg border border-gold-500/30 bg-gold-100 p-5 text-[13px] leading-relaxed text-gold-700">
+          <b class="mb-1 block font-semibold">Bon à savoir</b>
+          Les prix d'achat sont figés au HT du jour : une hausse de prix plus tard ne modifiera pas les commandes existantes.
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,95 @@
+<div class="animate-view mx-auto max-w-[640px]">
+  <div class="mb-7">
+    <a routerLink="/utilisateurs" class="mb-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-700 hover:text-gold-600">
+      <app-icon name="arrow-right" [size]="14" class="rotate-180" />
+      Retour aux utilisateurs
+    </a>
+    <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">{{ editId ? 'Modifier le compte' : 'Nouvel utilisateur' }}</h1>
+    <p class="mt-1.5 text-sm text-gray-600">
+      {{ editId ? 'Le login n’est pas modifiable ; le mot de passe se change via une procédure dédiée.' : 'Le compte se connectera avec son login et le mot de passe que vous définissez.' }}
+    </p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="enregistrer()" class="carte p-6 max-sm:p-4">
+    <!-- Identité -->
+    <h3 class="mb-4 font-display text-lg font-[650]">Identité</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div>
+        <label class="etiquette" for="prenom">Prénom *</label>
+        <input id="prenom" type="text" formControlName="prenom" class="champ" />
+        @if (form.controls.prenom.invalid && form.controls.prenom.touched) {
+          <p class="mt-1.5 text-xs text-danger">Le prénom est obligatoire.</p>
+        }
+      </div>
+      <div>
+        <label class="etiquette" for="nom">Nom *</label>
+        <input id="nom" type="text" formControlName="nom" class="champ" />
+        @if (form.controls.nom.invalid && form.controls.nom.touched) {
+          <p class="mt-1.5 text-xs text-danger">Le nom est obligatoire.</p>
+        }
+      </div>
+    </div>
+
+    <div class="my-5 border-t border-dashed border-line"></div>
+
+    <!-- Connexion -->
+    <h3 class="mb-4 font-display text-lg font-[650]">Connexion</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div>
+        <label class="etiquette" for="login">Login (email) *</label>
+        <input id="login" type="email" formControlName="login" class="champ" placeholder="utilisateur@entreprise.com" />
+        @if (form.controls.login.invalid && form.controls.login.touched) {
+          <p class="mt-1.5 text-xs text-danger">Saisissez un email valide — il sert d'identifiant de connexion.</p>
+        }
+        @if (editId) {
+          <p class="mt-1.5 text-2xs text-gray-400">Non modifiable après création.</p>
+        }
+      </div>
+      @if (!editId) {
+        <div>
+          <label class="etiquette" for="motDePasse">Mot de passe *</label>
+          <input id="motDePasse" type="password" formControlName="motDePasse" class="champ font-mono" placeholder="8 caractères minimum" autocomplete="new-password" />
+          @if (form.controls.motDePasse.invalid && form.controls.motDePasse.touched) {
+            <p class="mt-1.5 text-xs text-danger">8 caractères minimum.</p>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="my-5 border-t border-dashed border-line"></div>
+
+    <!-- Droits d'accès -->
+    <h3 class="mb-4 font-display text-lg font-[650]">Droits d'accès</h3>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+      <div>
+        <label class="etiquette" for="role">Rôle *</label>
+        <select id="role" formControlName="role" class="champ">
+          @for (r of roles; track r) {
+            <option [value]="r">{{ roleLabels[r] }}</option>
+          }
+        </select>
+        <p class="mt-1.5 text-2xs text-gray-400">Administrateur : tout. Gestionnaire : catalogue, commandes, stock. Vendeur : point de vente.</p>
+      </div>
+      <div>
+        <label class="etiquette" for="numTel">Téléphone</label>
+        <input id="numTel" type="tel" formControlName="numTel" class="champ font-mono" placeholder="+237 …" />
+      </div>
+      <div class="col-span-2 max-md:col-span-1">
+        <label class="etiquette" for="mail">Email</label>
+        <input id="mail" type="email" formControlName="mail" class="champ" />
+        <p class="mt-1.5 text-2xs text-gray-400">Utilisé pour les confirmations de commande (si ce compte en crée).</p>
+      </div>
+    </div>
+
+    @if (erreur()) {
+      <div class="mt-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+    }
+
+    <div class="mt-5 flex flex-wrap justify-end gap-2.5 max-sm:grid max-sm:grid-cols-1">
+      <a routerLink="/utilisateurs" class="btn btn-secondaire">Annuler</a>
+      <button type="submit" [disabled]="form.invalid || envoiEnCours()" class="btn btn-primaire">
+        {{ envoiEnCours() ? 'Enregistrement…' : editId ? 'Enregistrer' : 'Créer le compte' }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,237 @@
+<div class="animate-view">
+  <!-- ═══════════ En-tête ═══════════ -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Plateforme</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Entreprises clientes</h1>
+      <p class="mt-1.5 max-w-xl text-sm text-gray-600">
+        Les sociétés hébergées sur la plateforme. Chacune reçoit un espace isolé : ses utilisateurs ne voient que ses données.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 rounded-sm bg-gold-500 px-5 py-3 text-sm font-semibold text-ink-950 shadow-[0_4px_14px_rgba(201,146,46,0.28)] transition-all duration-200 ease-soft hover:-translate-y-px hover:brightness-106 hover:shadow-[0_8px_22px_rgba(201,146,46,0.38)]"
+      (click)="toggleFormulaire()"
+    >
+      <app-icon name="plus" [size]="16" />
+      {{ formulaireOuvert() ? 'Fermer le formulaire' : 'Onboarder une entreprise' }}
+    </button>
+  </div>
+
+  <!-- ═══════════ Formulaire d'onboarding (replié par défaut) ═══════════ -->
+  @if (formulaireOuvert()) {
+    <div class="mb-5 overflow-hidden rounded-lg border border-line bg-surface shadow-sm">
+      <!-- Étape 1 : l'entreprise -->
+      <div class="border-b border-line bg-surface-alt/60 p-5.5 max-sm:p-4">
+        <div class="mb-4 flex items-center gap-2.5">
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gold-500 font-mono text-xs font-bold text-ink-950">1</span>
+          <h3 class="font-display text-lg font-[650]">L'entreprise</h3>
+        </div>
+
+        <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+          <div class="col-span-2 max-md:col-span-1">
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Nom de l'entreprise *</label>
+            <input
+              type="text"
+              [(ngModel)]="nomEntreprise"
+              class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base transition-[border-color,box-shadow] duration-200 ease-soft focus:border-ink-700 focus:ring-4 focus:ring-ink-800/10 focus:outline-none"
+              placeholder="Ex. : DOVV Essos"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Adresse</label>
+            <input type="text" [(ngModel)]="adresse1" placeholder="Rue, quartier…" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Complément</label>
+            <input type="text" [(ngModel)]="adresse2" placeholder="Bâtiment, étage…" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Ville</label>
+            <input type="text" [(ngModel)]="ville" placeholder="Ex. : Douala" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+          <div class="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+            <div>
+              <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Code postal</label>
+              <input type="text" [(ngModel)]="codePostal" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Pays</label>
+              <input type="text" [(ngModel)]="pays" placeholder="Ex. : Cameroun" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Email de l'entreprise</label>
+            <input type="email" [(ngModel)]="mailEntreprise" placeholder="contact@entreprise.com" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Téléphone</label>
+            <input type="tel" [(ngModel)]="numTelEntreprise" placeholder="+237 …" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 font-mono text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 2 : le compte admin -->
+      <div class="p-5.5 max-sm:p-4">
+        <div class="mb-4 flex flex-wrap items-center gap-2.5">
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gold-500 font-mono text-xs font-bold text-ink-950">2</span>
+          <h3 class="font-display text-lg font-[650]">Le compte Administrateur</h3>
+          <span class="ml-auto hidden text-xs text-gray-400 sm:block">Identifiants à transmettre au client</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 max-md:grid-cols-1">
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Prénom de l'admin *</label>
+            <input type="text" [(ngModel)]="adminPrenom" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Nom de l'admin *</label>
+            <input type="text" [(ngModel)]="adminNom" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Identifiant de connexion *</label>
+            <input
+              type="text"
+              [(ngModel)]="adminLogin"
+              placeholder="ex. : patron@dovv-essos.com"
+              autocomplete="off"
+              class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 font-mono text-base focus:border-ink-700 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Mot de passe *</label>
+            <input
+              type="password"
+              [(ngModel)]="adminMotDePasse"
+              autocomplete="new-password"
+              minlength="6"
+              class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 font-mono text-base focus:border-ink-700 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Email de l'admin</label>
+            <input type="email" [(ngModel)]="adminMail" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-gray-600">Téléphone de l'admin</label>
+            <input type="tel" [(ngModel)]="adminNumTel" class="w-full rounded-sm border-[1.5px] border-line bg-surface px-3.5 py-3 font-mono text-base focus:border-ink-700 focus:outline-none" />
+          </div>
+        </div>
+
+        @if (erreur()) {
+          <div class="mt-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+        }
+
+        <div class="mt-5 flex flex-wrap justify-end gap-2.5 max-sm:grid max-sm:grid-cols-1">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center gap-2 rounded-sm border-[1.5px] border-line bg-transparent px-5 py-3 text-sm font-semibold text-gray-600 transition-all duration-200 ease-soft hover:bg-surface-alt hover:text-ink-800"
+            (click)="toggleFormulaire()"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            [disabled]="envoiEnCours()"
+            class="inline-flex items-center justify-center gap-2 rounded-sm bg-ink-850 px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all duration-200 ease-soft hover:-translate-y-px hover:bg-ink-800 hover:shadow-md disabled:pointer-events-none disabled:opacity-60"
+            (click)="onboarder()"
+          >
+            {{ envoiEnCours() ? 'Création…' : 'Créer l\u2019entreprise et son admin' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════════ Recherche ═══════════ -->
+  <div class="mb-4 flex flex-wrap items-center gap-3">
+    <div class="relative min-w-[200px] max-w-[280px] flex-1">
+      <app-icon class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="15" />
+      <input
+        type="text"
+        placeholder="Rechercher..."
+        [value]="recherche()"
+        (input)="recherche.set($any($event.target).value)"
+        class="w-full rounded-sm border-[1.5px] border-line bg-surface py-2.5 pl-9 pr-3 text-[13.4px] focus:border-ink-700 focus:outline-none"
+      />
+    </div>
+    <span class="text-xs text-gray-400">{{ entreprisesFiltrees().length }} entreprise(s)</span>
+  </div>
+
+  @if (entreprisesFiltrees().length === 0) {
+    <!-- ═══════════ État vide (mobile + desktop) ═══════════ -->
+    <div class="rounded-lg border border-line bg-surface px-6 py-[60px] text-center text-gray-400">
+      <app-icon class="mx-auto mb-3 opacity-50" name="building-2" [size]="36" />
+      <b class="mb-1 block text-[14.5px] text-gray-600">Aucune entreprise</b>
+      <span class="text-sm">Ajustez votre recherche ou onboarder votre première entreprise cliente.</span>
+    </div>
+  } @else {
+    <div class="overflow-hidden rounded-lg border border-line bg-surface">
+      <!-- ── Mobile : cartes ── -->
+      <ul class="divide-y divide-line max-md:block md:hidden">
+        @for (e of entreprisesFiltrees(); track e.id) {
+          <li class="flex items-center gap-3 p-4">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-800 text-sm font-bold text-white">{{ e.nom.charAt(0) }}</span>
+            <div class="min-w-0 flex-1">
+              <b class="block truncate text-sm font-semibold">{{ e.nom }}</b>
+              <span class="block truncate text-xs text-gray-600">{{ e.ville || e.mail || '—' }}</span>
+            </div>
+            <span class="shrink-0 rounded-full bg-[rgba(23,58,62,0.09)] px-2.5 py-1 text-xs font-bold text-ink-700">{{ e.nbUtilisateurs }}</span>
+            <a
+              [routerLink]="[e.id, 'editer']"
+              class="flex h-[31px] w-[31px] shrink-0 items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-surface-alt hover:text-ink-800"
+              title="Modifier les coordonnées"
+            >
+              <app-icon name="plus" [size]="15" />
+            </a>
+          </li>
+        }
+      </ul>
+
+      <!-- ── Desktop : tableau ── -->
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[640px] border-collapse">
+          <thead>
+            <tr>
+              <th class="border-b border-line bg-surface-alt px-4.5 py-3 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Entreprise</th>
+              <th class="border-b border-line bg-surface-alt px-4.5 py-3 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Ville</th>
+              <th class="border-b border-line bg-surface-alt px-4.5 py-3 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Email</th>
+              <th class="border-b border-line bg-surface-alt px-4.5 py-3 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Téléphone</th>
+              <th class="border-b border-line bg-surface-alt px-4.5 py-3 text-left text-xs font-bold uppercase tracking-[0.07em] text-gray-400">Comptes</th>
+              <th class="border-b border-line bg-surface-alt px-4.5 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of entreprisesFiltrees(); track e.id) {
+              <tr class="border-b border-surface-alt transition-colors duration-150 last:border-b-0 hover:bg-surface-alt">
+                <td class="px-4.5 py-3.5 text-[13.6px]">
+                  <div class="flex items-center gap-2.5">
+                    <span class="flex h-[27px] w-[27px] shrink-0 items-center justify-center rounded-full bg-ink-800 text-xs font-bold text-white">{{ e.nom.charAt(0) }}</span>
+                    <b class="font-semibold">{{ e.nom }}</b>
+                  </div>
+                </td>
+                <td class="px-4.5 py-3.5 text-[13.6px]">{{ e.ville || '—' }}</td>
+                <td class="px-4.5 py-3.5 text-[13.6px]">{{ e.mail || '—' }}</td>
+                <td class="px-4.5 py-3.5 font-mono text-[12.8px]">{{ e.numTel || '—' }}</td>
+                <td class="px-4.5 py-3.5">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-[rgba(23,58,62,0.09)] px-2.5 py-[4.5px] text-xs font-bold text-ink-700">{{ e.nbUtilisateurs }}</span>
+                </td>
+                <td class="px-4.5 py-3.5">
+                  <div class="flex justify-end gap-1.5">
+                    <a
+                      [routerLink]="[e.id, 'editer']"
+                      class="flex h-[31px] w-[31px] items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-surface-alt hover:text-ink-800"
+                      title="Modifier les coordonnées"
+                    >
+                      <app-icon name="plus" [size]="15" />
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

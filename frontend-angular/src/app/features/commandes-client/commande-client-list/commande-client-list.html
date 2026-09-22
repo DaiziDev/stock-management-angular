@@ -1,0 +1,274 @@
+<div class="animate-view">
+  <!-- En-tête -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Ventes</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Commandes client</h1>
+      <p class="mt-1.5 text-sm text-gray-600">Les commandes passées par vos clients, avant transformation en sortie de stock.</p>
+    </div>
+    <a routerLink="/commandes-client/nouvelle" class="btn btn-or">
+      <app-icon name="plus" [size]="16" />
+      Nouvelle commande
+    </a>
+  </div>
+
+  @if (erreur()) {
+    <div class="carte mb-4.5 p-14 text-center text-sm text-gray-400">
+      <app-icon class="mx-auto mb-3 opacity-50" name="clipboard-list" [size]="34" />
+      <b class="mb-1 block text-[14.5px] text-gray-600">Impossible de charger les commandes</b>
+      {{ erreur() }}
+      <div class="mt-4">
+        <button type="button" class="btn btn-secondaire" (click)="charger()">Réessayer</button>
+      </div>
+    </div>
+  } @else {
+    <!-- Bandeau compteurs -->
+    <div class="mb-4.5 grid grid-cols-4 gap-4.5 max-md:grid-cols-2 max-sm:grid-cols-2">
+      <div class="carte p-4">
+        <span class="text-2xs font-semibold uppercase tracking-wider text-gray-400">Total</span>
+        <b class="mt-1 block font-display text-2xl font-[650]">{{ commandes().length }}</b>
+      </div>
+      <div class="carte p-4">
+        <span class="text-2xs font-semibold uppercase tracking-wider text-gray-400">En cours</span>
+        <b class="mt-1 block font-display text-2xl font-[650] text-gold-600">{{ nbEnCours() }}</b>
+      </div>
+      <div class="carte p-4">
+        <span class="text-2xs font-semibold uppercase tracking-wider text-gray-400">En livraison</span>
+        <b class="mt-1 block font-display text-2xl font-[650] text-success">{{ nbEnLivraison() }}</b>
+      </div>
+      <div class="carte p-4">
+        <span class="text-2xs font-semibold uppercase tracking-wider text-gray-400">Annulées</span>
+        <b class="mt-1 block font-display text-2xl font-[650] text-danger">{{ nbAnnulees() }}</b>
+      </div>
+    </div>
+
+    <!-- Barre de filtres -->
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <div class="relative min-w-[200px] max-w-[280px] flex-1">
+        <app-icon class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="15" />
+        <input
+          type="text"
+          placeholder="Rechercher (code, client)…"
+          [value]="recherche()"
+          (input)="recherche.set($any($event.target).value)"
+          class="w-full rounded-sm border-[1.5px] border-line bg-surface py-2.5 pl-9 pr-3 text-[13.4px] focus:border-ink-700 focus:outline-none"
+        />
+      </div>
+      <div class="flex rounded-sm border-[1.5px] border-line bg-surface p-1">
+        @for (f of filtres; track f.v) {
+          <button
+            type="button"
+            class="rounded-[6px] px-3.5 py-1.5 text-xs font-semibold transition-colors"
+            [class]="filtreStatut() === f.v ? 'bg-ink-950 text-white' : 'text-gray-600 hover:text-ink-800'"
+            (click)="filtreStatut.set(f.v)"
+          >
+            {{ f.l }}
+          </button>
+        }
+      </div>
+      <span class="text-xs text-gray-400">{{ commandesFiltrees().length }} commande(s)</span>
+    </div>
+
+    @if (chargement()) {
+      <div class="space-y-2.5">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="h-[64px] animate-pulse rounded-lg border border-line bg-surface"></div>
+        }
+      </div>
+    } @else if (commandesFiltrees().length === 0) {
+      <div class="carte px-6 py-[60px] text-center text-gray-400">
+        <app-icon class="mx-auto mb-3 opacity-50" name="clipboard-list" [size]="36" />
+        <b class="mb-1 block text-[14.5px] text-gray-600">Aucune commande</b>
+        <span class="text-sm">
+          {{ commandes().length === 0 ? 'Créez la première commande pour vos clients.' : 'Aucune commande ne correspond à ces filtres.' }}
+        </span>
+      </div>
+    } @else {
+      <div class="carte overflow-hidden">
+        <!-- Mobile : cartes -->
+        <ul class="divide-y divide-line md:hidden">
+          @for (c of commandesFiltrees(); track c.id) {
+            <li class="p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <b class="block font-mono text-sm font-bold">{{ c.code }}</b>
+                  <span class="block truncate text-xs text-gray-600">{{ c.clientNom }} · {{ dateCourte(c.dateCommande) }}</span>
+                </div>
+                <span class="badge-statut" [attr.data-statut]="c.statut">{{ libelleStatut(c.statut) }}</span>
+              </div>
+              <div class="mt-2.5 flex items-center justify-between">
+                <span class="font-mono text-sm font-bold text-gold-600">{{ montant(c.total) }}</span>
+                <div class="flex gap-1.5">
+                  <button type="button" class="btn btn-secondaire px-3 py-1.5 text-xs" (click)="ouvrirDetail(c)">Détail</button>
+                  @if (c.statut === 'EN_COURS') {
+                    <button type="button" class="btn btn-primaire px-3 py-1.5 text-xs" [disabled]="actionEnCours() === c.id" (click)="valider(c)">Valider</button>
+                  }
+                  @if (c.statut === 'VALIDEE') {
+                    <button type="button" class="btn btn-primaire px-3 py-1.5 text-xs" [disabled]="actionEnCours() === c.id" (click)="expedier(c)">Expédier</button>
+                  }
+                  @if (c.statut === 'EXPEDIEE') {
+                    <button type="button" class="btn btn-primaire px-3 py-1.5 text-xs" [disabled]="actionEnCours() === c.id" (click)="livrer(c)">Livrer</button>
+                  }
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <!-- Desktop : tableau -->
+        <div class="hidden overflow-x-auto md:block">
+          <table class="w-full min-w-[720px] border-collapse">
+            <thead>
+              <tr>
+                <th class="th">Code</th>
+                <th class="th">Client</th>
+                <th class="th">Date</th>
+                <th class="th text-center">Articles</th>
+                <th class="th text-right">Total</th>
+                <th class="th text-center">Statut</th>
+                <th class="th w-44"></th>
+            </thead>
+            <tbody>
+              @for (c of commandesFiltrees(); track c.id) {
+                <tr class="ligne-table border-b border-surface-alt transition-colors duration-150 last:border-b-0">
+                  <td class="td font-mono font-semibold text-gray-700">{{ c.code }}</td>
+                  <td class="td font-semibold">{{ c.clientNom }}</td>
+                  <td class="td text-gray-600">{{ dateCourte(c.dateCommande) }} <span class="text-xs text-gray-400">{{ heure(c.dateCommande) }}</span></td>
+                  <td class="td text-center text-gray-600">
+                    {{ c.lignes.length }} <span class="text-xs text-gray-400">({{ c.lignes.reduce((n, l) => n + l.quantite, 0) }} u.)</span>
+                  </td>
+                  <td class="td text-right font-mono font-bold">{{ montant(c.total) }}</td>
+                  <td class="td text-center"><span class="badge-statut" [attr.data-statut]="c.statut">{{ libelleStatut(c.statut) }}</span></td>
+                  <td class="td">
+                    <div class="flex justify-end gap-1.5">
+                      <button type="button" class="btn btn-secondaire px-3 py-1.5 text-xs" (click)="ouvrirDetail(c)">Détail</button>
+                      @if (c.statut === 'EN_COURS') {
+                        <button type="button" class="btn btn-primaire px-3 py-1.5 text-xs" [disabled]="actionEnCours() === c.id" (click)="valider(c)">Valider</button>
+                      }
+                      @if (c.statut === 'VALIDEE') {
+                        <button type="button" class="btn btn-primaire px-3 py-1.5 text-xs" [disabled]="actionEnCours() === c.id" (click)="expedier(c)">Expédier</button>
+                      }
+                      @if (c.statut === 'EXPEDIEE') {
+                        <button type="button" class="btn btn-primaire px-3 py-1.5 text-xs" [disabled]="actionEnCours() === c.id" (click)="livrer(c)">Livrer</button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- ═══════════ Panneau de détail ═══════════ -->
+    @if (detail(); as d) {
+      <div class="fixed inset-0 z-[60] flex justify-end bg-ink-950/45 backdrop-blur-[2px]" (click)="fermerDetail()">
+        <div class="flex h-full w-full max-w-[460px] flex-col bg-canvas shadow-lg" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between border-b border-line px-6 py-4.5">
+            <div>
+              <b class="block font-display text-lg font-[650]">{{ d.code }}</b>
+              <span class="text-xs text-gray-400">{{ dateCourte(d.dateCommande) }} à {{ heure(d.dateCommande) }}</span>
+            </div>
+            <button type="button" class="rounded-md p-2 text-gray-400 hover:bg-surface-alt hover:text-ink-800" (click)="fermerDetail()" aria-label="Fermer">
+              <app-icon name="x" [size]="16" />
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto px-6 py-5">
+            @if (detailChargement()) {
+              <div class="space-y-2.5">
+                @for (i of [1, 2, 3]; track i) {
+                  <div class="h-14 animate-pulse rounded-md border border-line bg-surface"></div>
+                }
+              </div>
+            } @else {
+              <!-- Client + statut -->
+              <div class="mb-5 flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-4">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gold-100 text-sm font-bold text-gold-600">
+                    {{ d.clientNom.charAt(0) }}
+                  </span>
+                  <div>
+                    <b class="block text-sm font-semibold">{{ d.clientNom }}</b>
+                    <span class="text-xs text-gray-400">Client</span>
+                  </div>
+                </div>
+                <span class="badge-statut" [attr.data-statut]="d.statut">{{ libelleStatut(d.statut) }}</span>
+              </div>
+
+              <!-- Lignes -->
+              <h4 class="mb-2.5 font-mono text-2xs uppercase tracking-[0.13em] text-gray-400">Articles commandés</h4>
+              <ul class="mb-5 divide-y divide-line rounded-lg border border-line bg-surface">
+                @for (l of d.lignes; track l.id) {
+                  <li class="flex items-center gap-3 px-4 py-3">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-alt font-mono text-xs font-bold text-gray-600">
+                      ×{{ l.quantite }}
+                    </span>
+                    <span class="min-w-0 flex-1 truncate text-[13.5px] font-semibold">{{ l.articleDesignation }}</span>
+                    <span class="shrink-0 text-right">
+                      <span class="block font-mono text-[13px] font-bold">{{ montant(l.sousTotal) }}</span>
+                      <span class="block font-mono text-2xs text-gray-400">{{ montant(l.prixUnitaire) }} / u.</span>
+                    </span>
+                  </li>
+                }
+              </ul>
+
+              @if (erreurAction()) {
+                <div class="mb-4 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreurAction() }}</div>
+              }
+
+              <!-- Progression logistique (le stock a bougé dès la validation) -->
+              @if (d.statut !== 'EN_COURS' && d.statut !== 'ANNULEE') {
+                <div class="mb-5 rounded-lg border border-line bg-surface p-4">
+                  <div class="mb-2.5 flex items-center justify-between">
+                    <h4 class="font-mono text-2xs uppercase tracking-[0.13em] text-gray-400">Progression</h4>
+                    <span class="font-mono text-2xs font-bold text-gold-600">{{ etapeLivraison(d.statut) }}/3</span>
+                  </div>
+                  <div class="h-1.5 overflow-hidden rounded-full bg-surface-alt">
+                    <div class="h-full rounded-full bg-gold-500 transition-all duration-300" [style.width.%]="etapeLivraison(d.statut) * (100 / 3)"></div>
+                  </div>
+                  <p class="mt-2.5 text-xs text-gray-500">Les sorties de stock ont été générées à la validation de la commande.</p>
+                </div>
+              }
+
+              <!-- Total -->
+              <div class="mb-5 flex items-center justify-between rounded-lg bg-ink-950 px-5 py-4 text-white">
+                <span class="text-sm font-semibold text-fog-100">Total TTC</span>
+                <span class="font-mono text-lg font-bold text-gold-400">{{ montant(d.total) }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Actions (dépendent du statut : cycle EN_COURS -> VALIDEE -> EXPEDIEE -> LIVREE) -->
+          @if (d.statut === 'EN_COURS') {
+            <div class="flex gap-2.5 border-t border-line bg-surface px-6 py-4 max-sm:grid max-sm:grid-cols-1">
+              <button type="button" class="btn btn-danger flex-1" [disabled]="actionEnCours() === d.id" (click)="annuler(d)">
+                <app-icon name="x" [size]="15" />
+                Annuler
+              </button>
+              <button type="button" class="btn btn-or flex-1" [disabled]="actionEnCours() === d.id" (click)="valider(d)">
+                <app-icon name="check" [size]="15" />
+                {{ actionEnCours() === d.id ? 'Validation…' : 'Valider (sortie de stock)' }}
+              </button>
+            </div>
+          } @else if (d.statut === 'VALIDEE') {
+            <div class="border-t border-line bg-surface px-6 py-4">
+              <button type="button" class="btn btn-or w-full" [disabled]="actionEnCours() === d.id" (click)="expedier(d)">
+                <app-icon name="truck" [size]="15" />
+                {{ actionEnCours() === d.id ? 'Expédition…' : 'Marquer comme expédiée' }}
+              </button>
+            </div>
+          } @else if (d.statut === 'EXPEDIEE') {
+            <div class="border-t border-line bg-surface px-6 py-4">
+              <button type="button" class="btn btn-or w-full" [disabled]="actionEnCours() === d.id" (click)="livrer(d)">
+                <app-icon name="check-check" [size]="15" />
+                {{ actionEnCours() === d.id ? 'Confirmation…' : 'Confirmer la livraison' }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

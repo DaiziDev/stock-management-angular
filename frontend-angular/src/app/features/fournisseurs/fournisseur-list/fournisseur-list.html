@@ -1,0 +1,107 @@
+<div class="animate-view">
+  <!-- En-tête -->
+  <div class="mb-7 flex flex-wrap items-end justify-between gap-3.5">
+    <div>
+      <span class="mb-1.5 block font-mono text-xs uppercase tracking-[0.13em] text-gold-600">Tiers</span>
+      <h1 class="font-display text-3xl font-[650] tracking-[-0.01em]">Fournisseurs</h1>
+      <p class="mt-1.5 text-sm text-gray-600">Vos partenaires d'approvisionnement.</p>
+    </div>
+    <a routerLink="nouveau" class="btn btn-or">
+      <app-icon name="plus" [size]="16" />
+      Nouveau fournisseur
+    </a>
+  </div>
+
+  @if (erreur()) {
+    <div class="mb-4.5 rounded-sm border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{{ erreur() }}</div>
+  }
+
+  <!-- Recherche -->
+  <div class="mb-4 flex flex-wrap items-center gap-3">
+    <div class="relative min-w-[200px] max-w-[280px] flex-1">
+      <app-icon class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" name="search" [size]="15" />
+      <input
+        type="text"
+        placeholder="Rechercher un fournisseur..."
+        [value]="recherche()"
+        (input)="recherche.set($any($event.target).value)"
+        class="w-full rounded-sm border-[1.5px] border-line bg-surface py-2.5 pl-9 pr-3 text-[13.4px] focus:border-ink-700 focus:outline-none"
+      />
+    </div>
+    <span class="text-xs text-gray-400">{{ fournisseursFiltrees().length }} fournisseur(s)</span>
+  </div>
+
+  @if (chargement()) {
+    <div class="space-y-2.5">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="h-[58px] animate-pulse rounded-lg border border-line bg-surface"></div>
+      }
+    </div>
+  } @else if (fournisseursFiltrees().length === 0) {
+    <div class="carte px-6 py-[60px] text-center text-gray-400">
+      <app-icon class="mx-auto mb-3 opacity-50" name="truck" [size]="36" />
+      <b class="mb-1 block text-[14.5px] text-gray-600">Aucun fournisseur</b>
+      <span class="text-sm">Ajoutez votre premier fournisseur pour vos approvisionnements.</span>
+    </div>
+  } @else {
+    <div class="carte overflow-hidden">
+      <!-- Mobile : cartes -->
+      <ul class="divide-y divide-line md:hidden">
+        @for (f of fournisseursFiltrees(); track f.id) {
+          <li class="flex items-center gap-3 p-4">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-800 text-sm font-bold text-white">{{ f.nom.charAt(0) }}</span>
+            <div class="min-w-0 flex-1">
+              <b class="block truncate text-sm font-semibold">{{ f.nom }}</b>
+              <span class="block truncate text-xs text-gray-600">{{ f.ville || f.mail || '—' }}</span>
+            </div>
+            <a [routerLink]="[f.id, 'editer']" class="rounded-md p-2 text-gray-400 hover:bg-surface-alt hover:text-ink-800" title="Modifier">
+              <app-icon name="pencil" [size]="15" />
+            </a>
+            <button type="button" class="rounded-md p-2 text-gray-400 hover:bg-danger-bg hover:text-danger" (click)="supprimer(f)" title="Supprimer">
+              <app-icon name="trash" [size]="15" />
+            </button>
+          </li>
+        }
+      </ul>
+      <!-- Desktop : tableau -->
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[640px] border-collapse">
+          <thead>
+            <tr>
+              <th class="th">Fournisseur</th>
+              <th class="th">Ville</th>
+              <th class="th">Email</th>
+              <th class="th">Téléphone</th>
+              <th class="th w-24"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of fournisseursFiltrees(); track f.id) {
+              <tr class="ligne-table border-b border-surface-alt transition-colors duration-150 last:border-b-0">
+                <td class="td">
+                  <div class="flex items-center gap-2.5">
+                    <span class="flex h-[27px] w-[27px] shrink-0 items-center justify-center rounded-full bg-ink-800 text-xs font-bold text-white">{{ f.nom.charAt(0) }}</span>
+                    <b class="font-semibold">{{ f.nom }}</b>
+                  </div>
+                </td>
+                <td class="td">{{ f.ville || '—' }}</td>
+                <td class="td text-gray-600">{{ f.mail || '—' }}</td>
+                <td class="td font-mono text-gray-600">{{ f.numTel || '—' }}</td>
+                <td class="td">
+                  <div class="flex justify-end gap-1.5">
+                    <a [routerLink]="[f.id, 'editer']" class="flex h-[31px] w-[31px] items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-surface-alt hover:text-ink-800" title="Modifier">
+                      <app-icon name="pencil" [size]="15" />
+                    </a>
+                    <button type="button" class="flex h-[31px] w-[31px] items-center justify-center rounded-[9px] text-gray-400 transition-all duration-150 hover:bg-danger-bg hover:text-danger" (click)="supprimer(f)" title="Supprimer">
+                      <app-icon name="trash" [size]="15" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
